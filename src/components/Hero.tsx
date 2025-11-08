@@ -21,6 +21,12 @@ const Hero = () => {
                 Report an Issue
               </Button>
             </Link>
+                        <Link to="/auth">
+              <Button size="lg" className="text-lg px-8 bg-green-600 hover:bg-green-700 border-green-700 text-white">
+                <CheckCircle2 className="mr-2 h-5 w-5" />
+                Sign In
+              </Button>
+            </Link>
             <Link to="/issues">
               <Button size="lg" variant="outline" className="text-lg px-8 bg-white/10 backdrop-blur-sm border-white/30 text-white hover:bg-white/20 hover:text-white shadow-lg">
                 <TrendingUp className="mr-2 h-5 w-5" />
