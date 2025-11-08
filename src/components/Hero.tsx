@@ -31,28 +31,28 @@ const Hero = () => {
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 animate-in fade-in zoom-in-95 duration-700 delay-500">
             <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20 hover:bg-white/15 transition-all">
-              <div className="text-3xl font-bold mb-2">2,847</div>
+              <div className="text-3xl font-bold mb-2">0</div>
               <div className="text-sm text-white/80 flex items-center justify-center gap-2">
                 <AlertCircle className="h-4 w-4" />
                 Active Issues
               </div>
             </div>
             <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20 hover:bg-white/15 transition-all">
-              <div className="text-3xl font-bold mb-2">1,563</div>
+              <div className="text-3xl font-bold mb-2">0</div>
               <div className="text-sm text-white/80 flex items-center justify-center gap-2">
                 <CheckCircle2 className="h-4 w-4" />
                 Resolved
               </div>
             </div>
             <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20 hover:bg-white/15 transition-all">
-              <div className="text-3xl font-bold mb-2">15.2K</div>
+              <div className="text-3xl font-bold mb-2">0</div>
               <div className="text-sm text-white/80 flex items-center justify-center gap-2">
                 <Users className="h-4 w-4" />
                 Citizens
               </div>
             </div>
             <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20 hover:bg-white/15 transition-all">
-              <div className="text-3xl font-bold mb-2">428</div>
+              <div className="text-3xl font-bold mb-2">0</div>
               <div className="text-sm text-white/80 flex items-center justify-center gap-2">
                 <TrendingUp className="h-4 w-4" />
                 Organizations
