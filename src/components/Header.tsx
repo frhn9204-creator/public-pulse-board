@@ -52,7 +52,10 @@ const Header = () => {
               </Link>
               <Link to="/submit" className="mt-4">
                 <Button className="w-full">Report Issue</Button>
-              </Link>
+              </L
+                              <Link to="/auth" className="ml-4">
+                <Button variant="outline">Sign In</Button>
+              </Link>ink>
             </nav>
           </SheetContent>
         </Sheet>
