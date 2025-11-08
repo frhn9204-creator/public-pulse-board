@@ -75,11 +75,42 @@ const Submit = () => {
                     <Label htmlFor="organization">
                       Organization <span className="text-destructive">*</span>
                     </Label>
-                    <Input
-                      id="organization"
-                      placeholder="e.g., Municipal Corporation, Electricity Board"
-                      required
-                    />
+                    <Select required>
+              <SelectTrigger>
+                <SelectValue placeholder="Select an organization" />
+              </SelectTrigger>
+              <SelectContent>
+                {/* Transport */}
+                <SelectItem value="indian-railways">Indian Railways - Website: https://indianrailways.gov.in | Twitter: @RailMinIndia | Facebook: IndianRailwayOfficial</SelectItem>
+                <SelectItem value="morth">Ministry of Road Transport & Highways - Website: https://morth.nic.in | Twitter: @MORTHIndia | Facebook: MORTHIndia</SelectItem>
+                
+                {/* Health */}
+                <SelectItem value="mohfw">Ministry of Health & Family Welfare - Website: https://mohfw.gov.in | Twitter: @mohfw_india | Facebook: MoHFWIndia</SelectItem>
+                <SelectItem value="aiims">AIIMS (All India Institute of Medical Sciences) - Website: https://www.aiims.edu | Twitter: @AIIMS_Official | Facebook: AIIMS.Official</SelectItem>
+                
+                {/* Tax */}
+                <SelectItem value="income-tax">Income Tax Department - Website: https://incometaxindia.gov.in | Twitter: @IncomeTaxIndia | Facebook: IncomeTaxIndiaOfficial</SelectItem>
+                <SelectItem value="gst">GST Council - Website: https://gstcouncil.gov.in | Twitter: @askGST_GoI | Facebook: askGSTIndia</SelectItem>
+                
+                {/* Education */}
+                <SelectItem value="education-ministry">Ministry of Education - Website: https://education.gov.in | Twitter: @EduMinOfIndia | Facebook: EducationGovIn</SelectItem>
+                <SelectItem value="ugc">University Grants Commission (UGC) - Website: https://www.ugc.gov.in | Twitter: @ugc_india | Facebook: ugc.india</SelectItem>
+                
+                {/* Roads */}
+                <SelectItem value="nhai">National Highways Authority of India (NHAI) - Website: https://nhai.gov.in | Twitter: @NHAI_Official | Facebook: NHAI.Official</SelectItem>
+                
+                {/* Addictions (De-addiction) */}
+                <SelectItem value="nmba">Nasha Mukt Bharat Abhiyaan (NMBA) - Website: https://nmba.dosje.gov.in | Twitter: @MSJEGOI | Facebook: msje.gov.in</SelectItem>
+                
+                {/* Other Important Organizations */}
+                <SelectItem value="epfo">Employees' Provident Fund Organisation (EPFO) - Website: https://www.epfindia.gov.in | Twitter: @EPFOIndia | Facebook: EPFOIndia</SelectItem>
+                <SelectItem value="uidai">UIDAI (Aadhaar) - Website: https://uidai.gov.in | Twitter: @UIDAI | Facebook: uidai.gov.in</SelectItem>
+                <SelectItem value="indian-post">India Post - Website: https://www.indiapost.gov.in | Twitter: @IndiaPostOffice | Facebook: IndiaPostOffice</SelectItem>
+                <SelectItem value="police">State Police Departments - Website: Varies by state | Social Media: Varies by state</SelectItem>
+                <SelectItem value="electricity-board">State Electricity Boards - Website: Varies by state | Social Media: Varies by state</SelectItem>
+                <SelectItem value="water-board">Municipal Water Boards - Website: Varies by city | Social Media: Varies by city</SelectItem>
+              </SelectContent>
+            </Select>
                   </div>
 
                   {/* Category */}
