@@ -12,10 +12,35 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Search, Filter } from "lucide-react";
+import { useIssues } from "@/hooks/useIssues";
+import { useVotes } from "@/hooks/useVotes";
 
 const Issues = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const issues: any[] = [];
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [sortBy, setSortBy] = useState("newest");
+  const { issues, loading } = useIssues();
+  const { getVoteCount } = useVotes();
+
+  const filteredIssues = issues
+    .filter(issue => {
+      const matchesSearch = issue.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        issue.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        issue.organization.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesCategory = categoryFilter === "all" || issue.category === categoryFilter;
+      return matchesSearch && matchesCategory;
+    })
+    .map(issue => ({
+      ...issue,
+      votes: getVoteCount(issue.id),
+      urgency: (issue.urgency || 'medium') as "low" | "medium" | "high" | "critical"
+    }))
+    .sort((a, b) => {
+      if (sortBy === "votes") return b.votes - a.votes;
+      if (sortBy === "trending") return b.votes - a.votes;
+      if (sortBy === "resolved") return (b.status === 'resolved' ? 1 : 0) - (a.status === 'resolved' ? 1 : 0);
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -40,7 +65,7 @@ const Issues = () => {
                   className="pl-10 h-12"
                 />
               </div>
-              <Select defaultValue="all">
+              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
                 <SelectTrigger className="w-full md:w-[180px] h-12">
                   <Filter className="mr-2 h-4 w-4" />
                   <SelectValue placeholder="Category" />
@@ -54,7 +79,7 @@ const Issues = () => {
                   <SelectItem value="other">Other</SelectItem>
                 </SelectContent>
               </Select>
-              <Select defaultValue="newest">
+              <Select value={sortBy} onValueChange={setSortBy}>
                 <SelectTrigger className="w-full md:w-[180px] h-12">
                   <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
@@ -72,20 +97,28 @@ const Issues = () => {
         {/* Issues Grid */}
         <section className="py-12">
           <div className="container mx-auto px-4">
-            {issues.length === 0 ? (
+            {loading ? (
+              <div className="text-center py-16">
+                <p className="text-muted-foreground">Loading issues...</p>
+              </div>
+            ) : filteredIssues.length === 0 ? (
               <div className="text-center py-16">
                 <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-muted mb-6">
                   <Search className="h-10 w-10 text-muted-foreground" />
                 </div>
                 <h3 className="text-2xl font-semibold mb-2">No Issues Found</h3>
                 <p className="text-muted-foreground mb-6">
-                  Be the first to report an issue in your community
+                  {searchQuery || categoryFilter !== "all" 
+                    ? "Try adjusting your filters"
+                    : "Be the first to report an issue in your community"}
                 </p>
-                <Button size="lg">Report First Issue</Button>
+                <Button size="lg" asChild>
+                  <a href="/submit">Report First Issue</a>
+                </Button>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {issues.map((issue) => (
+                {filteredIssues.map((issue) => (
                   <IssueCard key={issue.id} {...issue} />
                 ))}
               </div>

@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -12,244 +13,206 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertCircle, Upload, Image as ImageIcon, CheckCircle2 } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Upload, Loader2 } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 const Submit = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    title: "",
+    organization: "",
+    category: "",
+    urgency: "",
+    location: "",
+    description: "",
+    imageUrl: ""
+  });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to report an issue.",
+        variant: "destructive",
+      });
+      navigate("/auth");
+    }
+  }, [user, navigate, toast]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) return;
+
     setIsSubmitting(true);
     
-    // Simulate submission
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      const { error } = await supabase
+        .from('issues')
+        .insert({
+          title: formData.title,
+          organization: formData.organization,
+          category: formData.category,
+          urgency: formData.urgency,
+          location: formData.location,
+          description: formData.description,
+          image_url: formData.imageUrl || null,
+          user_id: user.id,
+          status: 'open'
+        });
+
+      if (error) throw error;
+
       toast({
-        title: "Issue Reported Successfully!",
-        description: "Your issue has been submitted and is now visible to the community.",
+        title: "Issue reported successfully!",
+        description: "Your issue is now visible to the community.",
       });
-    }, 1500);
+      
+      navigate("/issues");
+    } catch (error: any) {
+      toast({
+        title: "Error submitting issue",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
       <main className="flex-1 py-12">
-        <div className="container mx-auto px-4 max-w-4xl">
-          {/* Header */}
-          <div className="mb-8">
-            <div className="flex items-center gap-3 mb-4">
-              <AlertCircle className="h-8 w-8 text-primary" />
-              <h1 className="text-4xl font-bold">Report an Issue</h1>
-            </div>
-            <p className="text-muted-foreground">
-              Make your voice heard. Report problems in your community and help drive positive change.
-            </p>
-          </div>
+        <div className="container mx-auto px-4 max-w-2xl">
+          <Card>
+            <CardHeader>
+              <CardTitle>Report an Issue</CardTitle>
+              <CardDescription>
+                Fill out the form below to report a problem in your community
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="title">Issue Title *</Label>
+                  <Input
+                    id="title"
+                    placeholder="Brief description of the issue"
+                    value={formData.title}
+                    onChange={(e) => setFormData({...formData, title: e.target.value})}
+                    required
+                  />
+                </div>
 
-          <div className="grid md:grid-cols-3 gap-6">
-            {/* Form */}
-            <Card className="md:col-span-2">
-              <CardHeader>
-                <CardTitle>Issue Details</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  {/* Title */}
-                  <div className="space-y-2">
-                    <Label htmlFor="title">
-                      Issue Title <span className="text-destructive">*</span>
-                    </Label>
-                    <Input
-                      id="title"
-                      placeholder="Brief, clear description of the problem"
-                      required
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="organization">Organization Name *</Label>
+                  <Input
+                    id="organization"
+                    placeholder="e.g., City Council, Water Department"
+                    value={formData.organization}
+                    onChange={(e) => setFormData({...formData, organization: e.target.value})}
+                    required
+                  />
+                </div>
 
-                  {/* Organization */}
-                  <div className="space-y-2">
-                    <Label htmlFor="organization">
-                      Organization <span className="text-destructive">*</span>
-                    </Label>
-                    <Select required>
-              <SelectTrigger>
-                <SelectValue placeholder="Select an organization" />
-              </SelectTrigger>
-              <SelectContent>
-                {/* Transport */}
-                <SelectItem value="indian-railways">Indian Railways - Website: https://indianrailways.gov.in | Twitter: @RailMinIndia | Facebook: IndianRailwayOfficial</SelectItem>
-                <SelectItem value="morth">Ministry of Road Transport & Highways - Website: https://morth.nic.in | Twitter: @MORTHIndia | Facebook: MORTHIndia</SelectItem>
-                
-                {/* Health */}
-                <SelectItem value="mohfw">Ministry of Health & Family Welfare - Website: https://mohfw.gov.in | Twitter: @mohfw_india | Facebook: MoHFWIndia</SelectItem>
-                <SelectItem value="aiims">AIIMS (All India Institute of Medical Sciences) - Website: https://www.aiims.edu | Twitter: @AIIMS_Official | Facebook: AIIMS.Official</SelectItem>
-                
-                {/* Tax */}
-                <SelectItem value="income-tax">Income Tax Department - Website: https://incometaxindia.gov.in | Twitter: @IncomeTaxIndia | Facebook: IncomeTaxIndiaOfficial</SelectItem>
-                <SelectItem value="gst">GST Council - Website: https://gstcouncil.gov.in | Twitter: @askGST_GoI | Facebook: askGSTIndia</SelectItem>
-                
-                {/* Education */}
-                <SelectItem value="education-ministry">Ministry of Education - Website: https://education.gov.in | Twitter: @EduMinOfIndia | Facebook: EducationGovIn</SelectItem>
-                <SelectItem value="ugc">University Grants Commission (UGC) - Website: https://www.ugc.gov.in | Twitter: @ugc_india | Facebook: ugc.india</SelectItem>
-                
-                {/* Roads */}
-                <SelectItem value="nhai">National Highways Authority of India (NHAI) - Website: https://nhai.gov.in | Twitter: @NHAI_Official | Facebook: NHAI.Official</SelectItem>
-                
-                {/* Addictions (De-addiction) */}
-                <SelectItem value="nmba">Nasha Mukt Bharat Abhiyaan (NMBA) - Website: https://nmba.dosje.gov.in | Twitter: @MSJEGOI | Facebook: msje.gov.in</SelectItem>
-                
-                {/* Other Important Organizations */}
-                <SelectItem value="epfo">Employees' Provident Fund Organisation (EPFO) - Website: https://www.epfindia.gov.in | Twitter: @EPFOIndia | Facebook: EPFOIndia</SelectItem>
-                <SelectItem value="uidai">UIDAI (Aadhaar) - Website: https://uidai.gov.in | Twitter: @UIDAI | Facebook: uidai.gov.in</SelectItem>
-                <SelectItem value="indian-post">India Post - Website: https://www.indiapost.gov.in | Twitter: @IndiaPostOffice | Facebook: IndiaPostOffice</SelectItem>
-                <SelectItem value="police">State Police Departments - Website: Varies by state | Social Media: Varies by state</SelectItem>
-                <SelectItem value="electricity-board">State Electricity Boards - Website: Varies by state | Social Media: Varies by state</SelectItem>
-                <SelectItem value="water-board">Municipal Water Boards - Website: Varies by city | Social Media: Varies by city</SelectItem>
-              </SelectContent>
-            </Select>
-                  </div>
-
-                  {/* Category */}
-                  <div className="space-y-2">
-                    <Label htmlFor="category">
-                      Category <span className="text-destructive">*</span>
-                    </Label>
-                    <Select required>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="infrastructure">Infrastructure</SelectItem>
-                        <SelectItem value="safety">Safety</SelectItem>
-                        <SelectItem value="cleanliness">Cleanliness</SelectItem>
-                        <SelectItem value="corruption">Corruption</SelectItem>
-                        <SelectItem value="healthcare">Healthcare</SelectItem>
-                        <SelectItem value="education">Education</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Urgency */}
-                  <div className="space-y-2">
-                    <Label htmlFor="urgency">
-                      Urgency Level <span className="text-destructive">*</span>
-                    </Label>
-                    <Select required>
-                      <SelectTrigger>
-                        <SelectValue placeholder="How urgent is this?" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="low">Low - Can wait</SelectItem>
-                        <SelectItem value="medium">Medium - Needs attention</SelectItem>
-                        <SelectItem value="high">High - Important</SelectItem>
-                        <SelectItem value="critical">Critical - Immediate action</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Location */}
-                  <div className="space-y-2">
-                    <Label htmlFor="location">Location</Label>
-                    <Input
-                      id="location"
-                      placeholder="Area, street, landmark"
-                    />
-                  </div>
-
-                  {/* Description */}
-                  <div className="space-y-2">
-                    <Label htmlFor="description">
-                      Detailed Description <span className="text-destructive">*</span>
-                    </Label>
-                    <Textarea
-                      id="description"
-                      placeholder="Explain the problem in detail. What happened? When? What impact is it having?"
-                      rows={6}
-                      required
-                    />
-                  </div>
-
-                  {/* Image Upload */}
-                  <div className="space-y-2">
-                    <Label htmlFor="images">Photos (Optional)</Label>
-                    <div className="border-2 border-dashed rounded-lg p-8 text-center hover:border-primary/50 transition-colors cursor-pointer">
-                      <input
-                        type="file"
-                        id="images"
-                        accept="image/*"
-                        multiple
-                        className="hidden"
-                      />
-                      <label htmlFor="images" className="cursor-pointer">
-                        <Upload className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
-                        <p className="text-sm font-medium mb-1">
-                          Click to upload images
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          PNG, JPG up to 10MB each (max 5 images)
-                        </p>
-                      </label>
-                    </div>
-                  </div>
-
-                  {/* Submit Button */}
-                  <Button 
-                    type="submit" 
-                    size="lg" 
-                    className="w-full"
-                    disabled={isSubmitting}
+                <div className="space-y-2">
+                  <Label htmlFor="category">Category *</Label>
+                  <Select 
+                    value={formData.category} 
+                    onValueChange={(value) => setFormData({...formData, category: value})}
                   >
-                    {isSubmitting ? "Submitting..." : "Submit Issue"}
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
+                    <SelectTrigger id="category">
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="infrastructure">Infrastructure</SelectItem>
+                      <SelectItem value="safety">Safety</SelectItem>
+                      <SelectItem value="cleanliness">Cleanliness</SelectItem>
+                      <SelectItem value="corruption">Corruption</SelectItem>
+                      <SelectItem value="education">Education</SelectItem>
+                      <SelectItem value="healthcare">Healthcare</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-            {/* Sidebar */}
-            <div className="space-y-6">
-              {/* Tips Card */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Reporting Tips</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4 text-sm">
-                  <div className="flex gap-3">
-                    <ImageIcon className="h-5 w-5 text-primary flex-shrink-0" />
-                    <p className="text-muted-foreground">
-                      Photos make your report more credible and help organizations understand the problem better
-                    </p>
-                  </div>
-                  <div className="flex gap-3">
-                    <AlertCircle className="h-5 w-5 text-primary flex-shrink-0" />
-                    <p className="text-muted-foreground">
-                      Be specific with location details to help authorities locate and fix the issue quickly
-                    </p>
-                  </div>
-                  <div className="flex gap-3">
-                    <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0" />
-                    <p className="text-muted-foreground">
-                      Keep your description factual and avoid offensive language
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
+                <div className="space-y-2">
+                  <Label htmlFor="urgency">Urgency Level *</Label>
+                  <Select 
+                    value={formData.urgency}
+                    onValueChange={(value) => setFormData({...formData, urgency: value})}
+                  >
+                    <SelectTrigger id="urgency">
+                      <SelectValue placeholder="Select urgency" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="low">Low</SelectItem>
+                      <SelectItem value="medium">Medium</SelectItem>
+                      <SelectItem value="high">High</SelectItem>
+                      <SelectItem value="critical">Critical</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-              {/* Privacy Card */}
-              <Card className="bg-muted/50">
-                <CardHeader>
-                  <CardTitle className="text-lg">Your Privacy</CardTitle>
-                </CardHeader>
-                <CardContent className="text-sm text-muted-foreground">
-                  Your report will be publicly visible. You can report anonymously by leaving out personal details. Your contact info will never be shared publicly.
-                </CardContent>
-              </Card>
-            </div>
-          </div>
+                <div className="space-y-2">
+                  <Label htmlFor="location">Location</Label>
+                  <Input
+                    id="location"
+                    placeholder="Street, area, or landmark"
+                    value={formData.location}
+                    onChange={(e) => setFormData({...formData, location: e.target.value})}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="description">Detailed Description *</Label>
+                  <Textarea
+                    id="description"
+                    placeholder="Provide details about the issue, when it started, and its impact..."
+                    className="min-h-[150px]"
+                    value={formData.description}
+                    onChange={(e) => setFormData({...formData, description: e.target.value})}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="image">Image URL (Optional)</Label>
+                  <Input
+                    id="image"
+                    type="url"
+                    placeholder="https://example.com/image.jpg"
+                    value={formData.imageUrl}
+                    onChange={(e) => setFormData({...formData, imageUrl: e.target.value})}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Provide a URL to an image showing the issue
+                  </p>
+                </div>
+
+                <Button 
+                  type="submit" 
+                  className="w-full" 
+                  disabled={isSubmitting || !formData.title || !formData.organization || !formData.category || !formData.urgency || !formData.description}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Submitting...
+                    </>
+                  ) : (
+                    "Submit Issue"
+                  )}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
         </div>
       </main>
       <Footer />

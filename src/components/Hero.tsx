@@ -1,8 +1,16 @@
 import { Button } from "@/components/ui/button";
 import { TrendingUp, Users, CheckCircle2, AlertCircle } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useUsers } from "@/hooks/useUsers";
+import { useIssues } from "@/hooks/useIssues";
 
 const Hero = () => {
+  const { userCount } = useUsers();
+  const { issues } = useIssues();
+  
+  const activeIssues = issues.filter(i => i.status === 'open').length;
+  const resolvedIssues = issues.filter(i => i.status === 'resolved').length;
+
   return (
     <div className="relative overflow-hidden bg-gradient-to-br from-primary via-primary to-accent py-20 lg:py-28">
       <div className="container mx-auto px-4">
@@ -37,21 +45,21 @@ const Hero = () => {
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 animate-in fade-in zoom-in-95 duration-700 delay-500">
             <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20 hover:bg-white/15 transition-all">
-              <div className="text-3xl font-bold mb-2">0</div>
+              <div className="text-3xl font-bold mb-2">{activeIssues}</div>
               <div className="text-sm text-white/80 flex items-center justify-center gap-2">
                 <AlertCircle className="h-4 w-4" />
                 Active Issues
               </div>
             </div>
             <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20 hover:bg-white/15 transition-all">
-              <div className="text-3xl font-bold mb-2">0</div>
+              <div className="text-3xl font-bold mb-2">{resolvedIssues}</div>
               <div className="text-sm text-white/80 flex items-center justify-center gap-2">
                 <CheckCircle2 className="h-4 w-4" />
                 Resolved
               </div>
             </div>
             <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20 hover:bg-white/15 transition-all">
-              <div className="text-3xl font-bold mb-2">0</div>
+              <div className="text-3xl font-bold mb-2">{userCount}</div>
               <div className="text-sm text-white/80 flex items-center justify-center gap-2">
                 <Users className="h-4 w-4" />
                 Citizens

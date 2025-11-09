@@ -8,14 +8,12 @@ interface IssueCardProps {
   id: string;
   title: string;
   organization: string;
-  category: string;
-  urgency: "low" | "medium" | "high" | "critical";
+  category?: string;
+  urgency?: "low" | "medium" | "high" | "critical";
   votes: number;
-  comments: number;
-  views: number;
-  imageUrl?: string;
-  status: "open" | "in-progress" | "resolved";
-  createdAt: string;
+  image_url?: string;
+  status: "open" | "in_progress" | "resolved";
+  created_at: string;
 }
 
 const urgencyColors = {
@@ -27,7 +25,7 @@ const urgencyColors = {
 
 const statusColors = {
   open: "border-l-urgent",
-  "in-progress": "border-l-warning",
+  in_progress: "border-l-warning",
   resolved: "border-l-success",
 };
 
@@ -35,21 +33,22 @@ const IssueCard = ({
   id,
   title,
   organization,
-  category,
-  urgency,
+  category = "other",
+  urgency = "medium",
   votes,
-  comments,
-  views,
-  imageUrl,
+  image_url,
   status,
-  createdAt,
+  created_at,
 }: IssueCardProps) => {
+  const comments = 0;
+  const views = 0;
+  const formattedDate = new Date(created_at).toLocaleDateString();
   return (
     <Card className={`overflow-hidden hover:shadow-lg transition-all border-l-4 ${statusColors[status]} group`}>
-      {imageUrl && (
+      {image_url && (
         <div className="relative h-48 overflow-hidden bg-muted">
           <img
-            src={imageUrl}
+            src={image_url}
             alt={title}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
@@ -79,7 +78,7 @@ const IssueCard = ({
           {status === "resolved" && (
             <Badge className="bg-success text-success-foreground">Resolved</Badge>
           )}
-          {status === "in-progress" && (
+          {status === "in_progress" && (
             <Badge className="bg-warning text-warning-foreground">In Progress</Badge>
           )}
         </div>
@@ -94,7 +93,7 @@ const IssueCard = ({
             <span>{comments}</span>
           </div>
           <span>•</span>
-          <span>{createdAt}</span>
+          <span>{formattedDate}</span>
         </div>
       </CardContent>
 

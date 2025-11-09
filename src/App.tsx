@@ -9,6 +9,7 @@ import Issues from "./pages/Issues";
 import Organizations from "./pages/Organizations";
 import Trending from "./pages/Trending";
 import Submit from "./pages/Submit";
+import Auth from "./pages/Auth";
 
 const queryClient = new QueryClient();
 
@@ -24,7 +25,7 @@ const App = () => (
           <Route path="/organizations" element={<Organizations />} />
           <Route path="/trending" element={<Trending />} />
           <Route path="/submit" element={<Submit />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="/auth" element={<Auth />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

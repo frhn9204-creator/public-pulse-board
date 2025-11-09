@@ -1,8 +1,20 @@
 import { TrendingUp } from "lucide-react";
 import IssueCard from "./IssueCard";
+import { useIssues } from "@/hooks/useIssues";
+import { useVotes } from "@/hooks/useVotes";
 
 const TrendingIssues = () => {
-  const trendingIssues: any[] = [];
+  const { issues } = useIssues();
+  const { getVoteCount } = useVotes();
+  
+  const trendingIssues = issues
+    .map(issue => ({
+      ...issue,
+      votes: getVoteCount(issue.id),
+      urgency: (issue.urgency || 'medium') as "low" | "medium" | "high" | "critical"
+    }))
+    .sort((a, b) => b.votes - a.votes)
+    .slice(0, 6);
 
   return (
     <section className="py-16 bg-secondary/30">
