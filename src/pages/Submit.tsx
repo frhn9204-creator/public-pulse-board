@@ -21,7 +21,7 @@ import { useToast } from "@/hooks/use-toast";
 
 const Submit = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
@@ -35,7 +35,7 @@ const Submit = () => {
   });
 
   useEffect(() => {
-    if (!user) {
+    if (!loading && !user) {
       toast({
         title: "Authentication required",
         description: "Please sign in to report an issue.",
@@ -43,11 +43,11 @@ const Submit = () => {
       });
       navigate("/auth");
     }
-  }, [user, navigate, toast]);
+  }, [user, loading, navigate, toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
+    if (!user || loading) return;
 
     setIsSubmitting(true);
     
@@ -84,6 +84,18 @@ const Submit = () => {
       setIsSubmitting(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col bg-background">
+        <Header />
+        <main className="flex-1 py-12 flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-background">

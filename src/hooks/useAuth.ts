@@ -38,6 +38,19 @@ export function useAuth() {
         }
       }
     });
+    
+    // Notify admin of new signup
+    if (!error && data.user) {
+      try {
+        await supabase.functions.invoke('notify-admin-signup', {
+          body: { email, fullName }
+        });
+      } catch (err) {
+        console.error('Failed to send admin notification:', err);
+        // Don't fail signup if notification fails
+      }
+    }
+    
     return { data, error };
   };
 
