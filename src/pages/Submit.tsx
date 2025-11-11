@@ -154,13 +154,32 @@ const Submit = () => {
 
                 <div className="space-y-2">
                   <Label htmlFor="organization">Organization Name *</Label>
-                  <Input
-                    id="organization"
-                    placeholder="e.g., City Council, Water Department"
-                    value={formData.organization}
-                    onChange={(e) => setFormData({...formData, organization: e.target.value})}
-                    required
-                  />
+                  <Select 
+                    value={formData.organization} 
+                    onValueChange={(value) => setFormData({...formData, organization: value})}
+                  >
+                    <SelectTrigger id="organization">
+                      <SelectValue placeholder="Select organization" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Municipal Corporation">Municipal Corporation</SelectItem>
+                      <SelectItem value="Police Department">Police Department</SelectItem>
+                      <SelectItem value="Public Health Department">Public Health Department</SelectItem>
+                      <SelectItem value="Public Works Department (Roads)">Public Works Department (Roads)</SelectItem>
+                      <SelectItem value="Water Supply Department">Water Supply Department</SelectItem>
+                      <SelectItem value="Electricity Board">Electricity Board</SelectItem>
+                      <SelectItem value="Transport Department">Transport Department</SelectItem>
+                      <SelectItem value="Education Department">Education Department</SelectItem>
+                      <SelectItem value="Housing Board">Housing Board</SelectItem>
+                      <SelectItem value="Waste Management Department">Waste Management Department</SelectItem>
+                      <SelectItem value="Fire Department">Fire Department</SelectItem>
+                      <SelectItem value="Traffic Police">Traffic Police</SelectItem>
+                      <SelectItem value="Revenue Department">Revenue Department</SelectItem>
+                      <SelectItem value="Food Safety Department">Food Safety Department</SelectItem>
+                      <SelectItem value="Environmental Department">Environmental Department</SelectItem>
+                      <SelectItem value="Other Government Agency">Other Government Agency</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="space-y-2">
