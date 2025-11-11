@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { z } from "zod";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,16 @@ import { Upload, Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+
+const issueSchema = z.object({
+  title: z.string().trim().min(3, "Title must be at least 3 characters").max(200, "Title must be less than 200 characters"),
+  organization: z.string().trim().min(2, "Organization must be at least 2 characters").max(100, "Organization must be less than 100 characters"),
+  category: z.string().min(1, "Category is required"),
+  urgency: z.string().min(1, "Urgency is required"),
+  location: z.string().max(200, "Location must be less than 200 characters").optional(),
+  description: z.string().trim().min(10, "Description must be at least 10 characters").max(5000, "Description must be less than 5000 characters"),
+  imageUrl: z.string().url("Must be a valid URL").max(500, "URL must be less than 500 characters").optional().or(z.literal(''))
+});
 
 const Submit = () => {
   const navigate = useNavigate();
@@ -52,16 +63,27 @@ const Submit = () => {
     setIsSubmitting(true);
     
     try {
+      // Validate input data
+      const validatedData = issueSchema.parse({
+        title: formData.title,
+        organization: formData.organization,
+        category: formData.category,
+        urgency: formData.urgency,
+        location: formData.location || undefined,
+        description: formData.description,
+        imageUrl: formData.imageUrl || ''
+      });
+
       const { error } = await supabase
         .from('issues')
         .insert({
-          title: formData.title,
-          organization: formData.organization,
-          category: formData.category,
-          urgency: formData.urgency,
-          location: formData.location,
-          description: formData.description,
-          image_url: formData.imageUrl || null,
+          title: validatedData.title,
+          organization: validatedData.organization,
+          category: validatedData.category,
+          urgency: validatedData.urgency,
+          location: validatedData.location || null,
+          description: validatedData.description,
+          image_url: validatedData.imageUrl || null,
           user_id: user.id,
           status: 'open'
         });
@@ -75,11 +97,19 @@ const Submit = () => {
       
       navigate("/issues");
     } catch (error: any) {
-      toast({
-        title: "Error submitting issue",
-        description: error.message,
-        variant: "destructive",
-      });
+      if (error instanceof z.ZodError) {
+        toast({
+          title: "Validation error",
+          description: error.errors[0].message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Error submitting issue",
+          description: error.message,
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }

@@ -1,4 +1,1 @@
 project_id = "pxyrxqgkmqyiqedlwejh"
-
-[functions.notify-admin-signup]
-verify_jwt = false
