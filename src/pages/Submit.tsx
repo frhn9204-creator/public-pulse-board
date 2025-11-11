@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Upload, Loader2 } from "lucide-react";
+import { Upload, Loader2, ExternalLink } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -29,6 +29,24 @@ const issueSchema = z.object({
   description: z.string().trim().min(10, "Description must be at least 10 characters").max(5000, "Description must be less than 5000 characters"),
   imageUrl: z.string().url("Must be a valid URL").max(500, "URL must be less than 500 characters").optional().or(z.literal(''))
 });
+
+const organizationWebsites: Record<string, string> = {
+  "Municipal Corporation": "https://www.india.gov.in/topics/infrastructure/municipal-corporation",
+  "Police Department": "https://www.mha.gov.in/",
+  "Public Health Department": "https://www.mohfw.gov.in/",
+  "Public Works Department (Roads)": "https://morth.nic.in/",
+  "Water Supply Department": "https://jalshakti-ddws.gov.in/",
+  "Electricity Board": "https://powermin.gov.in/",
+  "Transport Department": "https://morth.nic.in/road-transport",
+  "Education Department": "https://www.education.gov.in/",
+  "Housing Board": "https://mohua.gov.in/",
+  "Waste Management Department": "https://swachhbharat.mygov.in/",
+  "Fire Department": "https://www.india.gov.in/topics/infrastructure/fire-services",
+  "Traffic Police": "https://morth.nic.in/road-transport",
+  "Revenue Department": "https://www.india.gov.in/topics/governance-administration/revenue-department",
+  "Food Safety Department": "https://www.fssai.gov.in/",
+  "Environmental Department": "https://moef.gov.in/"
+};
 
 const Submit = () => {
   const navigate = useNavigate();
@@ -180,6 +198,17 @@ const Submit = () => {
                       <SelectItem value="Other Government Agency">Other Government Agency</SelectItem>
                     </SelectContent>
                   </Select>
+                  {formData.organization && organizationWebsites[formData.organization] && (
+                    <a 
+                      href={organizationWebsites[formData.organization]} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+                    >
+                      <ExternalLink className="h-3 w-3" />
+                      Visit official website
+                    </a>
+                  )}
                 </div>
 
                 <div className="space-y-2">
