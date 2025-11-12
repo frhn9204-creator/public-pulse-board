@@ -3,10 +3,12 @@ import { TrendingUp, Users, CheckCircle2, AlertCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useUsers } from "@/hooks/useUsers";
 import { useIssues } from "@/hooks/useIssues";
+import { useOrganizations } from "@/hooks/useOrganizations";
 
 const Hero = () => {
   const { userCount } = useUsers();
   const { issues } = useIssues();
+  const { organizationCount } = useOrganizations();
   
   const activeIssues = issues.filter(i => i.status === 'open').length;
   const resolvedIssues = issues.filter(i => i.status === 'resolved').length;
@@ -66,7 +68,7 @@ const Hero = () => {
               </div>
             </div>
             <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20 hover:bg-white/15 transition-all">
-              <div className="text-3xl font-bold mb-2">0</div>
+              <div className="text-3xl font-bold mb-2">{organizationCount}</div>
               <div className="text-sm text-white/80 flex items-center justify-center gap-2">
                 <TrendingUp className="h-4 w-4" />
                 Organizations
