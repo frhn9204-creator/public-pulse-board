@@ -22,31 +22,113 @@ import { useToast } from "@/hooks/use-toast";
 
 const issueSchema = z.object({
   title: z.string().trim().min(3, "Title must be at least 3 characters").max(200, "Title must be less than 200 characters"),
+  country: z.string().trim().min(2, "Country is required").max(100, "Country must be less than 100 characters"),
+  state: z.string().trim().min(2, "State/Region is required").max(100, "State must be less than 100 characters"),
   organization: z.string().trim().min(2, "Organization must be at least 2 characters").max(100, "Organization must be less than 100 characters"),
   category: z.string().min(1, "Category is required"),
   urgency: z.string().min(1, "Urgency is required"),
   location: z.string().max(200, "Location must be less than 200 characters").optional(),
+  subLocation: z.string().max(200, "Sub-location must be less than 200 characters").optional(),
   description: z.string().trim().min(10, "Description must be at least 10 characters").max(5000, "Description must be less than 5000 characters"),
   imageUrl: z.string().url("Must be a valid URL").max(500, "URL must be less than 500 characters").optional().or(z.literal(''))
 });
 
-const organizationWebsites: Record<string, string> = {
-  "Municipal Corporation": "https://www.india.gov.in/topics/infrastructure/municipal-corporation",
-  "Police Department": "https://www.mha.gov.in/",
-  "Public Health Department": "https://www.mohfw.gov.in/",
-  "Public Works Department (Roads)": "https://morth.nic.in/",
-  "Water Supply Department": "https://jalshakti-ddws.gov.in/",
-  "Electricity Board": "https://powermin.gov.in/",
-  "Transport Department": "https://morth.nic.in/road-transport",
-  "Education Department": "https://www.education.gov.in/",
-  "Housing Board": "https://mohua.gov.in/",
-  "Waste Management Department": "https://swachhbharat.mygov.in/",
-  "Fire Department": "https://www.india.gov.in/topics/infrastructure/fire-services",
-  "Traffic Police": "https://morth.nic.in/road-transport",
-  "Revenue Department": "https://www.india.gov.in/topics/governance-administration/revenue-department",
-  "Food Safety Department": "https://www.fssai.gov.in/",
-  "Environmental Department": "https://moef.gov.in/"
+const organizationData: Record<string, { website: string; social?: { platform: string; url: string }[] }> = {
+  "Municipal Corporation": {
+    website: "https://www.india.gov.in/topics/infrastructure/municipal-corporation",
+    social: [
+      { platform: "Twitter", url: "https://twitter.com/IndiaGov" },
+      { platform: "Facebook", url: "https://www.facebook.com/IndiaGov" }
+    ]
+  },
+  "Police Department": {
+    website: "https://www.mha.gov.in/",
+    social: [
+      { platform: "Twitter", url: "https://twitter.com/HMOIndia" }
+    ]
+  },
+  "Public Health Department": {
+    website: "https://www.mohfw.gov.in/",
+    social: [
+      { platform: "Twitter", url: "https://twitter.com/MoHFW_INDIA" }
+    ]
+  },
+  "Public Works Department (Roads)": {
+    website: "https://morth.nic.in/",
+    social: [
+      { platform: "Twitter", url: "https://twitter.com/MORTHIndia" }
+    ]
+  },
+  "Water Supply Department": {
+    website: "https://jalshakti-ddws.gov.in/",
+    social: [
+      { platform: "Twitter", url: "https://twitter.com/jalshakti_goi" }
+    ]
+  },
+  "Electricity Board": {
+    website: "https://powermin.gov.in/",
+    social: [
+      { platform: "Twitter", url: "https://twitter.com/PowerMin_India" }
+    ]
+  },
+  "Transport Department": {
+    website: "https://morth.nic.in/road-transport",
+    social: [
+      { platform: "Twitter", url: "https://twitter.com/MORTHIndia" }
+    ]
+  },
+  "Education Department": {
+    website: "https://www.education.gov.in/",
+    social: [
+      { platform: "Twitter", url: "https://twitter.com/EduMinOfIndia" }
+    ]
+  },
+  "Housing Board": {
+    website: "https://mohua.gov.in/",
+    social: [
+      { platform: "Twitter", url: "https://twitter.com/MoHUA_India" }
+    ]
+  },
+  "Waste Management Department": {
+    website: "https://swachhbharat.mygov.in/",
+    social: [
+      { platform: "Twitter", url: "https://twitter.com/swachhbharat" },
+      { platform: "Facebook", url: "https://www.facebook.com/SwachhBharatAbhiyan" }
+    ]
+  },
+  "Fire Department": {
+    website: "https://www.india.gov.in/topics/infrastructure/fire-services"
+  },
+  "Traffic Police": {
+    website: "https://morth.nic.in/road-transport"
+  },
+  "Revenue Department": {
+    website: "https://www.india.gov.in/topics/governance-administration/revenue-department"
+  },
+  "Food Safety Department": {
+    website: "https://www.fssai.gov.in/",
+    social: [
+      { platform: "Twitter", url: "https://twitter.com/fssaiindia" },
+      { platform: "Facebook", url: "https://www.facebook.com/FSSAIIndia" }
+    ]
+  },
+  "Environmental Department": {
+    website: "https://moef.gov.in/",
+    social: [
+      { platform: "Twitter", url: "https://twitter.com/moefcc" }
+    ]
+  }
 };
+
+const indianStates = [
+  "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh",
+  "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka",
+  "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram",
+  "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu",
+  "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal",
+  "Andaman and Nicobar Islands", "Chandigarh", "Dadra and Nagar Haveli and Daman and Diu",
+  "Delhi", "Jammu and Kashmir", "Ladakh", "Lakshadweep", "Puducherry"
+];
 
 const Submit = () => {
   const navigate = useNavigate();
@@ -55,10 +137,13 @@ const Submit = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
+    country: "India",
+    state: "",
     organization: "",
     category: "",
     urgency: "",
     location: "",
+    subLocation: "",
     description: "",
     imageUrl: ""
   });
@@ -84,13 +169,23 @@ const Submit = () => {
       // Validate input data
       const validatedData = issueSchema.parse({
         title: formData.title,
+        country: formData.country,
+        state: formData.state,
         organization: formData.organization,
         category: formData.category,
         urgency: formData.urgency,
         location: formData.location || undefined,
+        subLocation: formData.subLocation || undefined,
         description: formData.description,
         imageUrl: formData.imageUrl || ''
       });
+
+      const fullLocation = [
+        validatedData.subLocation,
+        validatedData.location,
+        validatedData.state,
+        validatedData.country
+      ].filter(Boolean).join(", ");
 
       const { error } = await supabase
         .from('issues')
@@ -99,7 +194,7 @@ const Submit = () => {
           organization: validatedData.organization,
           category: validatedData.category,
           urgency: validatedData.urgency,
-          location: validatedData.location || null,
+          location: fullLocation || null,
           description: validatedData.description,
           image_url: validatedData.imageUrl || null,
           user_id: user.id,
@@ -171,6 +266,58 @@ const Submit = () => {
                 </div>
 
                 <div className="space-y-2">
+                  <Label htmlFor="country">Country *</Label>
+                  <Select 
+                    value={formData.country} 
+                    onValueChange={(value) => setFormData({...formData, country: value, state: ""})}
+                  >
+                    <SelectTrigger id="country">
+                      <SelectValue placeholder="Select country" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="India">India</SelectItem>
+                      <SelectItem value="United States">United States</SelectItem>
+                      <SelectItem value="United Kingdom">United Kingdom</SelectItem>
+                      <SelectItem value="Canada">Canada</SelectItem>
+                      <SelectItem value="Australia">Australia</SelectItem>
+                      <SelectItem value="Other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {formData.country === "India" && (
+                  <div className="space-y-2">
+                    <Label htmlFor="state">State/Region *</Label>
+                    <Select 
+                      value={formData.state} 
+                      onValueChange={(value) => setFormData({...formData, state: value})}
+                    >
+                      <SelectTrigger id="state">
+                        <SelectValue placeholder="Select state" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {indianStates.map((state) => (
+                          <SelectItem key={state} value={state}>{state}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {formData.country !== "India" && (
+                  <div className="space-y-2">
+                    <Label htmlFor="state">State/Region *</Label>
+                    <Input
+                      id="state"
+                      placeholder="Enter your state or region"
+                      value={formData.state}
+                      onChange={(e) => setFormData({...formData, state: e.target.value})}
+                      required
+                    />
+                  </div>
+                )}
+
+                <div className="space-y-2">
                   <Label htmlFor="organization">Organization Name *</Label>
                   <Select 
                     value={formData.organization} 
@@ -198,16 +345,34 @@ const Submit = () => {
                       <SelectItem value="Other Government Agency">Other Government Agency</SelectItem>
                     </SelectContent>
                   </Select>
-                  {formData.organization && organizationWebsites[formData.organization] && (
-                    <a 
-                      href={organizationWebsites[formData.organization]} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
-                    >
-                      <ExternalLink className="h-3 w-3" />
-                      Visit official website
-                    </a>
+                  {formData.organization && organizationData[formData.organization] && (
+                    <div className="space-y-2">
+                      <a 
+                        href={organizationData[formData.organization].website} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+                      >
+                        <ExternalLink className="h-3 w-3" />
+                        Visit official website
+                      </a>
+                      {organizationData[formData.organization].social && (
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {organizationData[formData.organization].social!.map((social) => (
+                            <a
+                              key={social.platform}
+                              href={social.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-md bg-muted hover:bg-muted/80 transition-colors"
+                            >
+                              <ExternalLink className="h-3 w-3" />
+                              {social.platform}
+                            </a>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
 
@@ -251,13 +416,26 @@ const Submit = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="location">Location</Label>
+                  <Label htmlFor="location">City/District</Label>
                   <Input
                     id="location"
-                    placeholder="Street, area, or landmark"
+                    placeholder="Enter city or district"
                     value={formData.location}
                     onChange={(e) => setFormData({...formData, location: e.target.value})}
                   />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="subLocation">Area/Locality (Specific Location)</Label>
+                  <Input
+                    id="subLocation"
+                    placeholder="Street, area, or landmark"
+                    value={formData.subLocation}
+                    onChange={(e) => setFormData({...formData, subLocation: e.target.value})}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Provide the exact location where the issue exists
+                  </p>
                 </div>
 
                 <div className="space-y-2">
@@ -289,7 +467,7 @@ const Submit = () => {
                 <Button 
                   type="submit" 
                   className="w-full" 
-                  disabled={isSubmitting || !formData.title || !formData.organization || !formData.category || !formData.urgency || !formData.description}
+                  disabled={isSubmitting || !formData.title || !formData.country || !formData.state || !formData.organization || !formData.category || !formData.urgency || !formData.description}
                 >
                   {isSubmitting ? (
                     <>
