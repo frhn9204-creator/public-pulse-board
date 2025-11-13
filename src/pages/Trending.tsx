@@ -5,11 +5,96 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { TrendingUp, Flame, Clock, MapPin } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useIssues } from "@/hooks/useIssues";
+import { useVotes } from "@/hooks/useVotes";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const Trending = () => {
-  const trendingIssues: any[] = [];
-  const trendingOrgs: any[] = [];
-  const trendingLocations: any[] = [];
+  const { issues } = useIssues();
+  const { getVoteCount } = useVotes();
+  const [organizations, setOrganizations] = useState<any[]>([]);
+  
+  // Get trending issues (sorted by votes)
+  const trendingIssues = issues
+    .map(issue => ({
+      ...issue,
+      votes: getVoteCount(issue.id),
+      urgency: (issue.urgency || 'medium') as "low" | "medium" | "high" | "critical"
+    }))
+    .sort((a, b) => b.votes - a.votes)
+    .slice(0, 12); // Show top 12
+
+  // Fetch organizations with stats
+  useEffect(() => {
+    const fetchOrganizations = async () => {
+      const { data, error } = await supabase
+        .from('issues')
+        .select('organization, status, created_at');
+      
+      if (!error && data) {
+        // Group by organization and calculate stats
+        const orgStats = data.reduce((acc: any, issue: any) => {
+          const org = issue.organization;
+          if (!acc[org]) {
+            acc[org] = {
+              name: org,
+              activeIssues: 0,
+              resolvedIssues: 0,
+              totalIssues: 0
+            };
+          }
+          acc[org].totalIssues++;
+          if (issue.status === 'resolved') {
+            acc[org].resolvedIssues++;
+          } else {
+            acc[org].activeIssues++;
+          }
+          return acc;
+        }, {});
+        
+        // Convert to array and sort by total issues
+        const orgsArray = Object.values(orgStats)
+          .sort((a: any, b: any) => b.totalIssues - a.totalIssues)
+          .slice(0, 9); // Top 9
+        
+        setOrganizations(orgsArray);
+      }
+    };
+    
+    fetchOrganizations();
+  }, [issues]);
+
+  // Get trending locations
+  const trendingLocations = issues
+    .filter(issue => issue.location)
+    .reduce((acc: any[], issue) => {
+      const location = issue.location!;
+      const existing = acc.find(loc => loc.name === location);
+      if (existing) {
+        existing.activeIssues++;
+        if (issue.category) {
+          existing.categories[issue.category] = (existing.categories[issue.category] || 0) + 1;
+        }
+      } else {
+        acc.push({
+          id: location,
+          name: location,
+          area: location,
+          activeIssues: 1,
+          categories: issue.category ? { [issue.category]: 1 } : {},
+          topCategory: issue.category || 'General'
+        });
+      }
+      return acc;
+    }, [])
+    .map(loc => ({
+      ...loc,
+      topCategory: Object.entries(loc.categories)
+        .sort(([, a]: any, [, b]: any) => b - a)[0]?.[0] || 'General'
+    }))
+    .sort((a, b) => b.activeIssues - a.activeIssues)
+    .slice(0, 6);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -70,20 +155,20 @@ const Trending = () => {
 
               {/* Trending Organizations Tab */}
               <TabsContent value="organizations">
-                {trendingOrgs.length === 0 ? (
+                {organizations.length === 0 ? (
                   <div className="text-center py-16">
                     <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-muted mb-6">
                       <Flame className="h-10 w-10 text-muted-foreground" />
                     </div>
                     <h3 className="text-2xl font-semibold mb-2">No Trending Organizations</h3>
                     <p className="text-muted-foreground">
-                      Organizations with most issues or fastest responses will appear here
+                      Organizations with most issues will appear here
                     </p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {trendingOrgs.map((org: any, index: number) => (
-                      <Card key={org.id} className="hover:shadow-lg transition-all">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {organizations.map((org: any, index: number) => (
+                      <Card key={org.name} className="hover:shadow-lg transition-all">
                         <CardHeader>
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
@@ -92,24 +177,19 @@ const Trending = () => {
                               </div>
                               <div>
                                 <CardTitle>{org.name}</CardTitle>
-                                <p className="text-sm text-muted-foreground">{org.category}</p>
                               </div>
                             </div>
-                            <Badge variant="secondary">
-                              <Clock className="h-3 w-3 mr-1" />
-                              {org.trendingFor}
-                            </Badge>
                           </div>
                         </CardHeader>
                         <CardContent>
                           <div className="flex gap-4 text-sm">
                             <div>
-                              <span className="text-muted-foreground">Issues: </span>
-                              <span className="font-semibold">{org.issueCount}</span>
+                              <span className="text-muted-foreground">Active: </span>
+                              <span className="font-semibold text-urgent">{org.activeIssues}</span>
                             </div>
                             <div>
-                              <span className="text-muted-foreground">Votes: </span>
-                              <span className="font-semibold">{org.voteCount}</span>
+                              <span className="text-muted-foreground">Resolved: </span>
+                              <span className="font-semibold text-success">{org.resolvedIssues}</span>
                             </div>
                           </div>
                         </CardContent>
@@ -140,7 +220,6 @@ const Trending = () => {
                             <MapPin className="h-5 w-5 text-primary" />
                             <CardTitle className="text-lg">{location.name}</CardTitle>
                           </div>
-                          <p className="text-sm text-muted-foreground">{location.area}</p>
                         </CardHeader>
                         <CardContent>
                           <div className="space-y-2">
