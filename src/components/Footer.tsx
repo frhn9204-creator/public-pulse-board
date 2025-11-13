@@ -54,6 +54,7 @@ const Footer = () => {
 
         <div className="border-t mt-8 pt-8 text-center text-sm text-muted-foreground">
           <p>&copy; {new Date().getFullYear()} VoiceUp. All rights reserved. Built for transparency and accountability.</p>
+          <p className="mt-2">Made by Farhan, Zikrnad, Nandani</p>
         </div>
       </div>
     </footer>

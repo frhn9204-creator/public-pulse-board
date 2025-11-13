@@ -22,7 +22,6 @@ import { useToast } from "@/hooks/use-toast";
 
 const issueSchema = z.object({
   title: z.string().trim().min(3, "Title must be at least 3 characters").max(200, "Title must be less than 200 characters"),
-  country: z.string().trim().min(2, "Country is required").max(100, "Country must be less than 100 characters"),
   state: z.string().trim().min(2, "State/Region is required").max(100, "State must be less than 100 characters"),
   organization: z.string().trim().min(2, "Organization must be at least 2 characters").max(100, "Organization must be less than 100 characters"),
   category: z.string().min(1, "Category is required"),
@@ -137,7 +136,6 @@ const Submit = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
-    country: "India",
     state: "",
     organization: "",
     category: "",
@@ -169,7 +167,6 @@ const Submit = () => {
       // Validate input data
       const validatedData = issueSchema.parse({
         title: formData.title,
-        country: formData.country,
         state: formData.state,
         organization: formData.organization,
         category: formData.category,
@@ -184,7 +181,7 @@ const Submit = () => {
         validatedData.subLocation,
         validatedData.location,
         validatedData.state,
-        validatedData.country
+        "India"
       ].filter(Boolean).join(", ");
 
       const { error } = await supabase
@@ -266,56 +263,21 @@ const Submit = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="country">Country *</Label>
+                  <Label htmlFor="state">State *</Label>
                   <Select 
-                    value={formData.country} 
-                    onValueChange={(value) => setFormData({...formData, country: value, state: ""})}
+                    value={formData.state} 
+                    onValueChange={(value) => setFormData({...formData, state: value})}
                   >
-                    <SelectTrigger id="country">
-                      <SelectValue placeholder="Select country" />
+                    <SelectTrigger id="state">
+                      <SelectValue placeholder="Select state" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="India">India</SelectItem>
-                      <SelectItem value="United States">United States</SelectItem>
-                      <SelectItem value="United Kingdom">United Kingdom</SelectItem>
-                      <SelectItem value="Canada">Canada</SelectItem>
-                      <SelectItem value="Australia">Australia</SelectItem>
-                      <SelectItem value="Other">Other</SelectItem>
+                      {indianStates.map((state) => (
+                        <SelectItem key={state} value={state}>{state}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
-
-                {formData.country === "India" && (
-                  <div className="space-y-2">
-                    <Label htmlFor="state">State/Region *</Label>
-                    <Select 
-                      value={formData.state} 
-                      onValueChange={(value) => setFormData({...formData, state: value})}
-                    >
-                      <SelectTrigger id="state">
-                        <SelectValue placeholder="Select state" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {indianStates.map((state) => (
-                          <SelectItem key={state} value={state}>{state}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-
-                {formData.country !== "India" && (
-                  <div className="space-y-2">
-                    <Label htmlFor="state">State/Region *</Label>
-                    <Input
-                      id="state"
-                      placeholder="Enter your state or region"
-                      value={formData.state}
-                      onChange={(e) => setFormData({...formData, state: e.target.value})}
-                      required
-                    />
-                  </div>
-                )}
 
                 <div className="space-y-2">
                   <Label htmlFor="organization">Organization Name *</Label>
@@ -467,7 +429,7 @@ const Submit = () => {
                 <Button 
                   type="submit" 
                   className="w-full" 
-                  disabled={isSubmitting || !formData.title || !formData.country || !formData.state || !formData.organization || !formData.category || !formData.urgency || !formData.description}
+                  disabled={isSubmitting || !formData.title || !formData.state || !formData.organization || !formData.category || !formData.urgency || !formData.description}
                 >
                   {isSubmitting ? (
                     <>
