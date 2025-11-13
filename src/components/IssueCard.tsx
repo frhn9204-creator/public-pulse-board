@@ -48,7 +48,6 @@ const IssueCard = ({
   const navigate = useNavigate();
   const { toast } = useToast();
   const [userVoted, setUserVoted] = useState(false);
-  const [isVoting, setIsVoting] = useState(false);
   const { comments } = useComments(id);
   const { getViewCount } = useIssueViews();
   const formattedDate = new Date(created_at).toLocaleDateString();
@@ -75,8 +74,6 @@ const IssueCard = ({
     e.preventDefault();
     e.stopPropagation();
     
-    if (isVoting) return; // Prevent multiple rapid clicks
-    
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       toast({
@@ -88,8 +85,6 @@ const IssueCard = ({
       return;
     }
 
-    setIsVoting(true);
-
     if (userVoted) {
       const { error } = await supabase
         .from('votes')
@@ -100,12 +95,6 @@ const IssueCard = ({
       if (!error) {
         setUserVoted(false);
         toast({ title: "Vote removed" });
-      } else {
-        toast({
-          title: "Error",
-          description: "Failed to remove vote. Please try again.",
-          variant: "destructive",
-        });
       }
     } else {
       const { error } = await supabase
@@ -115,26 +104,8 @@ const IssueCard = ({
       if (!error) {
         setUserVoted(true);
         toast({ title: "Vote added!" });
-      } else {
-        // Check if error is due to duplicate vote
-        if (error.code === '23505') {
-          toast({
-            title: "Already voted",
-            description: "You have already voted for this issue.",
-            variant: "destructive",
-          });
-          setUserVoted(true); // Update local state to match database
-        } else {
-          toast({
-            title: "Error",
-            description: "Failed to add vote. Please try again.",
-            variant: "destructive",
-          });
-        }
       }
     }
-    
-    setIsVoting(false);
   };
 
   const handleShare = async (e: React.MouseEvent) => {
@@ -142,60 +113,24 @@ const IssueCard = ({
     e.stopPropagation();
     
     const url = `${window.location.origin}/issues/${id}`;
-    
-    // Try to use the Web Share API first (mobile browsers)
-    if (navigator.share && navigator.canShare) {
+    if (navigator.share) {
       try {
         await navigator.share({
           title: title,
           text: `Check out this issue: ${title}`,
           url: url,
         });
-        toast({
-          title: "Shared successfully!",
-          description: "Thank you for sharing this issue.",
-        });
-        return;
-      } catch (error: any) {
-        // User cancelled or share failed, fall through to clipboard
-        if (error.name !== 'AbortError') {
-          console.log('Share failed:', error);
-        }
+      } catch (error) {
+        console.log('Share cancelled');
       }
-    }
-    
-    // Fallback to clipboard copy
-    try {
-      await navigator.clipboard.writeText(url);
+    } else {
+      navigator.clipboard.writeText(url);
       toast({
         title: "Link copied!",
         description: "Share this link with others",
       });
-    } catch (error) {
-      // Final fallback for very old browsers
-      const textArea = document.createElement('textarea');
-      textArea.value = url;
-      textArea.style.position = 'fixed';
-      textArea.style.left = '-999999px';
-      document.body.appendChild(textArea);
-      textArea.select();
-      try {
-        document.execCommand('copy');
-        toast({
-          title: "Link copied!",
-          description: "Share this link with others",
-        });
-      } catch (err) {
-        toast({
-          title: "Failed to copy",
-          description: "Please copy the URL manually",
-          variant: "destructive",
-        });
-      }
-      document.body.removeChild(textArea);
     }
   };
-
   return (
     <Card className={`overflow-hidden hover:shadow-lg transition-all border-l-4 ${statusColors[status]} group`}>
       {image_url && (
@@ -225,6 +160,7 @@ const IssueCard = ({
             {urgency}
           </Badge>
         </div>
+
         <div className="flex items-center gap-2 mb-4">
           <Badge variant="outline">{category}</Badge>
           {status === "resolved" && (
@@ -234,6 +170,7 @@ const IssueCard = ({
             <Badge className="bg-warning text-warning-foreground">In Progress</Badge>
           )}
         </div>
+
         <div className="flex items-center gap-4 text-sm text-muted-foreground">
           <div className="flex items-center gap-1">
             <Eye className="h-4 w-4" />
@@ -247,13 +184,13 @@ const IssueCard = ({
           <span>{formattedDate}</span>
         </div>
       </CardContent>
+
       <CardFooter className="p-6 pt-0 flex items-center justify-between">
         <Button
           onClick={handleVote}
           variant={userVoted ? "default" : "ghost"}
           size="sm"
           className="gap-2 hover:bg-primary/10 hover:text-primary"
-          disabled={isVoting}
         >
           <ArrowUp className="h-4 w-4" />
           <span className="font-semibold">{votes}</span>
