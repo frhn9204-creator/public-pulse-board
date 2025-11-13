@@ -82,26 +82,23 @@ const IssueDetail = () => {
       return;
     }
 
-    if (userVoted) {
-      const { error } = await supabase
-        .from('votes')
-        .delete()
-        .eq('issue_id', id)
-        .eq('user_id', user.id);
+    // Only allow voting if user hasn't voted yet
+    if (!userVoted) {
+          const { error } = await supabase
+              .from('votes')
+              .insert({ issue_id: id, user_id: user.id });
 
-      if (!error) {
-        setUserVoted(false);
-        toast({ title: "Vote removed" });
-      }
-    } else {
-      const { error } = await supabase
-        .from('votes')
-        .insert({ issue_id: id, user_id: user.id });
-
-      if (!error) {
-        setUserVoted(true);
-        toast({ title: "Vote added!" });
-      }
+            if (!error) {
+              setUserVoted(true);
+              toast({ title: "Vote added!" });
+          } else {
+      // User has already voted
+      toast({ 
+        title: "Already voted", 
+        description: "You can only vote once per issue",
+        variant: "default"
+      });
+    
     }
   };
 
