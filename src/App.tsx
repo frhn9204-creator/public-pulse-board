@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Issues from "./pages/Issues";
+import IssueDetail from "./pages/IssueDetail";
 import Organizations from "./pages/Organizations";
 import Trending from "./pages/Trending";
 import Submit from "./pages/Submit";
@@ -22,6 +23,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/issues" element={<Issues />} />
+          <Route path="/issues/:id" element={<IssueDetail />} />
           <Route path="/organizations" element={<Organizations />} />
           <Route path="/trending" element={<Trending />} />
           <Route path="/submit" element={<Submit />} />
