@@ -85,7 +85,9 @@ export type Database = {
           description: string
           id: string
           image_url: string | null
+          latitude: number | null
           location: string | null
+          longitude: number | null
           organization: string
           status: string | null
           title: string
@@ -99,7 +101,9 @@ export type Database = {
           description: string
           id?: string
           image_url?: string | null
+          latitude?: number | null
           location?: string | null
+          longitude?: number | null
           organization: string
           status?: string | null
           title: string
@@ -113,7 +117,9 @@ export type Database = {
           description?: string
           id?: string
           image_url?: string | null
+          latitude?: number | null
           location?: string | null
+          longitude?: number | null
           organization?: string
           status?: string | null
           title?: string
