@@ -9,6 +9,8 @@ export interface Issue {
   category?: string;
   urgency?: string;
   location?: string;
+  latitude?: number;
+  longitude?: number;
   status: 'open' | 'in_progress' | 'resolved';
   created_at: string;
   image_url?: string;

@@ -184,6 +184,24 @@ const Submit = () => {
         "India"
       ].filter(Boolean).join(", ");
 
+      // Geocode the location
+      let latitude = null;
+      let longitude = null;
+      
+      try {
+        const geocodeResponse = await supabase.functions.invoke('geocode-location', {
+          body: { location: fullLocation }
+        });
+        
+        if (geocodeResponse.data && !geocodeResponse.error) {
+          latitude = geocodeResponse.data.latitude;
+          longitude = geocodeResponse.data.longitude;
+        }
+      } catch (geocodeError) {
+        console.error('Geocoding failed:', geocodeError);
+        // Continue without coordinates if geocoding fails
+      }
+
       const { error } = await supabase
         .from('issues')
         .insert({
@@ -192,6 +210,8 @@ const Submit = () => {
           category: validatedData.category,
           urgency: validatedData.urgency,
           location: fullLocation || null,
+          latitude,
+          longitude,
           description: validatedData.description,
           image_url: validatedData.imageUrl || null,
           user_id: user.id,

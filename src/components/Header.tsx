@@ -43,6 +43,9 @@ const Header = () => {
           <Link to="/issues" className="text-sm font-medium hover:text-primary transition-colors">
             Browse Issues
           </Link>
+          <Link to="/map" className="text-sm font-medium hover:text-primary transition-colors">
+            Map View
+          </Link>
           <Link to="/organizations" className="text-sm font-medium hover:text-primary transition-colors">
             Organizations
           </Link>
@@ -83,6 +86,9 @@ const Header = () => {
             <nav className="flex flex-col gap-4 mt-8">
               <Link to="/issues" className="text-lg font-medium hover:text-primary transition-colors">
                 Browse Issues
+              </Link>
+              <Link to="/map" className="text-lg font-medium hover:text-primary transition-colors">
+                Map View
               </Link>
               <Link to="/organizations" className="text-lg font-medium hover:text-primary transition-colors">
                 Organizations
