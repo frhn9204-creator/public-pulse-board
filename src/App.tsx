@@ -11,6 +11,7 @@ import Organizations from "./pages/Organizations";
 import Trending from "./pages/Trending";
 import Submit from "./pages/Submit";
 import Auth from "./pages/Auth";
+import MapView from "./pages/MapView";
 
 const queryClient = new QueryClient();
 
@@ -24,6 +25,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/issues" element={<Issues />} />
           <Route path="/issues/:id" element={<IssueDetail />} />
+          <Route path="/map" element={<MapView />} />
           <Route path="/organizations" element={<Organizations />} />
           <Route path="/trending" element={<Trending />} />
           <Route path="/submit" element={<Submit />} />
