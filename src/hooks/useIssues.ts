@@ -9,6 +9,7 @@ export interface Issue {
   category?: string;
   urgency?: string;
   location?: string;
+  pincode?: string;
   latitude?: number;
   longitude?: number;
   status: 'open' | 'in_progress' | 'resolved';
