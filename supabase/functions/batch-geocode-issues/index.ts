@@ -30,7 +30,7 @@ serve(async (req) => {
     // Fetch all issues without coordinates but with location data
     const { data: issues, error: fetchError } = await supabaseClient
       .from('issues')
-      .select('id, location')
+      .select('id, location, pincode')
       .is('latitude', null)
       .is('longitude', null)
       .not('location', 'is', null);
@@ -63,13 +63,23 @@ serve(async (req) => {
         let foundLocation = false;
 
         // Try multiple search strategies with progressively broader searches
-        const searchStrategies = [
-          issue.location, // Try exact location first
-          issue.location?.split(',').slice(-3).join(','), // Try last 3 parts (city, state, country)
-          issue.location?.split(',').slice(-2).join(','), // Try last 2 parts (state, country)
-        ].filter(Boolean);
+        // Prioritize pincode if available
+        const searchStrategies = issue.pincode 
+          ? [
+              `${issue.pincode}, India`, // Pincode first (most accurate)
+              issue.location,
+              issue.location?.split(',').slice(-3).join(','),
+              issue.location?.split(',').slice(-2).join(','),
+            ]
+          : [
+              issue.location,
+              issue.location?.split(',').slice(-3).join(','),
+              issue.location?.split(',').slice(-2).join(','),
+            ];
 
-        for (const searchLocation of searchStrategies) {
+        const validSearchStrategies = searchStrategies.filter(Boolean);
+
+        for (const searchLocation of validSearchStrategies) {
           if (foundLocation) break;
           
           const geocodeUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(searchLocation)}.json?access_token=${mapboxToken}&country=IN&limit=1`;

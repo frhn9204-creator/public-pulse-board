@@ -26,6 +26,7 @@ const issueSchema = z.object({
   organization: z.string().trim().min(2, "Organization must be at least 2 characters").max(100, "Organization must be less than 100 characters"),
   category: z.string().min(1, "Category is required"),
   urgency: z.string().min(1, "Urgency is required"),
+  pincode: z.string().regex(/^[1-9][0-9]{5}$/, "Must be a valid 6-digit Indian pincode").optional().or(z.literal('')),
   location: z.string().max(200, "Location must be less than 200 characters").optional(),
   subLocation: z.string().max(200, "Sub-location must be less than 200 characters").optional(),
   description: z.string().trim().min(10, "Description must be at least 10 characters").max(5000, "Description must be less than 5000 characters"),
@@ -142,6 +143,7 @@ const Submit = () => {
     urgency: "",
     location: "",
     subLocation: "",
+    pincode: "",
     description: "",
     imageUrl: ""
   });
@@ -171,6 +173,7 @@ const Submit = () => {
         organization: formData.organization,
         category: formData.category,
         urgency: formData.urgency,
+        pincode: formData.pincode || '',
         location: formData.location || undefined,
         subLocation: formData.subLocation || undefined,
         description: formData.description,
@@ -184,13 +187,21 @@ const Submit = () => {
         "India"
       ].filter(Boolean).join(", ");
 
-      // Geocode the location
+      // Geocode the location - prioritize pincode if available
       let latitude = null;
       let longitude = null;
       
       try {
+        // If pincode is provided, use it for more accurate geocoding
+        const geocodeLocation = validatedData.pincode 
+          ? `${validatedData.pincode}, India`
+          : fullLocation;
+          
         const geocodeResponse = await supabase.functions.invoke('geocode-location', {
-          body: { location: fullLocation }
+          body: { 
+            location: geocodeLocation,
+            usePincode: !!validatedData.pincode 
+          }
         });
         
         if (geocodeResponse.data && !geocodeResponse.error) {
@@ -210,6 +221,7 @@ const Submit = () => {
           category: validatedData.category,
           urgency: validatedData.urgency,
           location: fullLocation || null,
+          pincode: validatedData.pincode || null,
           latitude,
           longitude,
           description: validatedData.description,
@@ -395,6 +407,21 @@ const Submit = () => {
                       <SelectItem value="critical">Critical</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="pincode">Pincode</Label>
+                  <Input
+                    id="pincode"
+                    placeholder="Enter 6-digit pincode"
+                    value={formData.pincode}
+                    onChange={(e) => setFormData({...formData, pincode: e.target.value})}
+                    maxLength={6}
+                    pattern="[0-9]*"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Pincode helps locate the issue more accurately on the map
+                  </p>
                 </div>
 
                 <div className="space-y-2">

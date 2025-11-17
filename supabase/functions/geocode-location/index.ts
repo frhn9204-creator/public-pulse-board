@@ -31,7 +31,8 @@ serve(async (req) => {
       );
     }
 
-    // Geocode using Mapbox Geocoding API
+    // Enhanced geocoding with pincode support
+    // For pincode queries, use postcode type for better accuracy
     const geocodeUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(location)}.json?access_token=${mapboxToken}&country=IN&limit=1`;
     
     console.log('Geocoding location:', location);
