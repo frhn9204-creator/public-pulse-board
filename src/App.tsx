@@ -12,6 +12,7 @@ import Trending from "./pages/Trending";
 import Submit from "./pages/Submit";
 import Auth from "./pages/Auth";
 import MapView from "./pages/MapView";
+import AdminGeocoding from "./pages/AdminGeocoding";
 
 const queryClient = new QueryClient();
 
@@ -30,6 +31,7 @@ const App = () => (
           <Route path="/trending" element={<Trending />} />
           <Route path="/submit" element={<Submit />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/admin/geocoding" element={<AdminGeocoding />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

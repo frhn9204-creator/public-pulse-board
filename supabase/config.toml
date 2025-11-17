@@ -1,1 +1,4 @@
 project_id = "pxyrxqgkmqyiqedlwejh"
+
+[functions.batch-geocode-issues]
+verify_jwt = false
