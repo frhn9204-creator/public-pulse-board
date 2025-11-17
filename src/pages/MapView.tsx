@@ -6,12 +6,17 @@ import { useIssues } from "@/hooks/useIssues";
 import { Loader2, MapPin } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const MapView = () => {
   const { issues, loading } = useIssues();
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [urgencyFilter, setUrgencyFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [isGeocoding, setIsGeocoding] = useState(false);
+  const { toast } = useToast();
 
   // Filter issues
   const filteredIssues = issues.filter((issue) => {
@@ -28,6 +33,31 @@ const MapView = () => {
   const issuesWithCoords = issues.filter(i => i.latitude && i.longitude).length;
   const issuesWithoutCoords = issues.length - issuesWithCoords;
 
+  const handleGeocode = async () => {
+    setIsGeocoding(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('batch-geocode-issues');
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Geocoding completed!",
+        description: `Successfully geocoded ${data.success} out of ${data.total} issues.`,
+      });
+      
+      // Refresh the page to show updated issues
+      window.location.reload();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to geocode issues",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeocoding(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
@@ -43,9 +73,26 @@ const MapView = () => {
               Visualize all reported issues on an interactive map. Click on markers to view details.
             </p>
             {issuesWithoutCoords > 0 && (
-              <p className="text-sm text-muted-foreground mt-2">
-                {issuesWithoutCoords} issue(s) without location coordinates are hidden from the map.
-              </p>
+              <div className="mt-4 p-4 bg-muted/50 rounded-lg">
+                <p className="text-sm text-muted-foreground mb-3">
+                  {issuesWithoutCoords} issue(s) without location coordinates are hidden from the map.
+                </p>
+                <Button 
+                  onClick={handleGeocode}
+                  disabled={isGeocoding}
+                  size="sm"
+                  variant="outline"
+                >
+                  {isGeocoding ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Geocoding...
+                    </>
+                  ) : (
+                    'Geocode All Issues'
+                  )}
+                </Button>
+              </div>
             )}
           </div>
         </section>
