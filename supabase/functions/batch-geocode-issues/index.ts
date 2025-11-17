@@ -58,14 +58,36 @@ serve(async (req) => {
     // Geocode each issue with a small delay to avoid rate limiting
     for (const issue of issues) {
       try {
-        const geocodeUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(issue.location)}.json?access_token=${mapboxToken}&country=IN&limit=1`;
-        
-        const response = await fetch(geocodeUrl);
-        const data = await response.json();
-        
-        if (data.features && data.features.length > 0) {
-          const [longitude, latitude] = data.features[0].center;
+        let latitude = null;
+        let longitude = null;
+        let foundLocation = false;
+
+        // Try multiple search strategies with progressively broader searches
+        const searchStrategies = [
+          issue.location, // Try exact location first
+          issue.location?.split(',').slice(-3).join(','), // Try last 3 parts (city, state, country)
+          issue.location?.split(',').slice(-2).join(','), // Try last 2 parts (state, country)
+        ].filter(Boolean);
+
+        for (const searchLocation of searchStrategies) {
+          if (foundLocation) break;
           
+          const geocodeUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(searchLocation)}.json?access_token=${mapboxToken}&country=IN&limit=1`;
+          
+          const response = await fetch(geocodeUrl);
+          const data = await response.json();
+          
+          if (data.features && data.features.length > 0) {
+            [longitude, latitude] = data.features[0].center;
+            foundLocation = true;
+            console.log(`Found coordinates for issue ${issue.id} using "${searchLocation}": ${latitude}, ${longitude}`);
+          }
+
+          // Small delay between retries
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+
+        if (foundLocation && latitude && longitude) {
           // Update the issue with coordinates
           const { error: updateError } = await supabaseClient
             .from('issues')
@@ -76,7 +98,7 @@ serve(async (req) => {
             console.error(`Failed to update issue ${issue.id}:`, updateError);
             failCount++;
           } else {
-            console.log(`Successfully geocoded issue ${issue.id}: ${issue.location}`);
+            console.log(`Successfully geocoded issue ${issue.id}`);
             successCount++;
           }
         } else {
@@ -84,7 +106,7 @@ serve(async (req) => {
           failCount++;
         }
 
-        // Small delay to avoid rate limiting (Mapbox allows 600 requests/minute)
+        // Delay to avoid rate limiting (Mapbox allows 600 requests/minute)
         await new Promise(resolve => setTimeout(resolve, 150));
         
       } catch (error) {
