@@ -66,23 +66,28 @@ serve(async (req) => {
         // Prioritize pincode if available
         const searchStrategies = issue.pincode 
           ? [
-              `${issue.pincode}, India`, // Pincode first (most accurate)
-              issue.location,
-              issue.location?.split(',').slice(-3).join(','),
-              issue.location?.split(',').slice(-2).join(','),
+              { query: `${issue.pincode}`, types: 'postcode' }, // Pincode with postcode type
+              { query: `Patna ${issue.pincode}`, types: 'place,postcode' }, // City + Pincode
+              { query: `Bihar ${issue.pincode}`, types: 'region,postcode' }, // State + Pincode
+              { query: `${issue.pincode}, India`, types: '' }, // Standard search
+              { query: issue.location || '', types: '' },
             ]
           : [
-              issue.location,
-              issue.location?.split(',').slice(-3).join(','),
-              issue.location?.split(',').slice(-2).join(','),
+              { query: `Patna, Bihar, India`, types: 'place' }, // Default to Patna if no pincode
+              { query: issue.location || '', types: '' },
+              { query: (issue.location || '').split(',').slice(-3).join(','), types: '' },
+              { query: (issue.location || '').split(',').slice(-2).join(','), types: '' },
             ];
 
-        const validSearchStrategies = searchStrategies.filter(Boolean);
+        const validSearchStrategies = searchStrategies.filter(s => s.query);
 
-        for (const searchLocation of validSearchStrategies) {
+        for (const searchStrategy of validSearchStrategies) {
           if (foundLocation) break;
           
-          const geocodeUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(searchLocation)}.json?access_token=${mapboxToken}&country=IN&limit=1`;
+          const typesParam = searchStrategy.types ? `&types=${searchStrategy.types}` : '';
+          const geocodeUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(searchStrategy.query)}.json?access_token=${mapboxToken}&country=IN${typesParam}&limit=1`;
+          
+          console.log(`Trying: ${searchStrategy.query} with types: ${searchStrategy.types || 'none'}`);
           
           const response = await fetch(geocodeUrl);
           const data = await response.json();
@@ -90,7 +95,7 @@ serve(async (req) => {
           if (data.features && data.features.length > 0) {
             [longitude, latitude] = data.features[0].center;
             foundLocation = true;
-            console.log(`Found coordinates for issue ${issue.id} using "${searchLocation}": ${latitude}, ${longitude}`);
+            console.log(`Found coordinates for issue ${issue.id} using "${searchStrategy.query}": ${latitude}, ${longitude}`);
           }
 
           // Small delay between retries
