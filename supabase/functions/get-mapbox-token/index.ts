@@ -12,17 +12,21 @@ serve(async (req) => {
   }
 
   try {
-    const mapboxToken = Deno.env.get('MAPBOX_PUBLIC_TOKEN');
+    const primaryKey = Deno.env.get('GEOAPIFY_PRIMARY_KEY');
+    const secondaryKey = Deno.env.get('GEOAPIFY_SECONDARY_KEY');
     
-    if (!mapboxToken) {
+    if (!primaryKey && !secondaryKey) {
       return new Response(
-        JSON.stringify({ error: 'Mapbox token not configured' }),
+        JSON.stringify({ error: 'Geoapify token not configured' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     return new Response(
-      JSON.stringify({ token: mapboxToken }),
+      JSON.stringify({ 
+        primaryKey: primaryKey || '',
+        secondaryKey: secondaryKey || ''
+      }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
     

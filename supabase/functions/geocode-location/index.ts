@@ -21,10 +21,10 @@ serve(async (req) => {
       );
     }
 
-    const mapboxToken = Deno.env.get('MAPBOX_PUBLIC_TOKEN');
+    const apiKey = Deno.env.get('GEOAPIFY_PRIMARY_KEY') || Deno.env.get('GEOAPIFY_SECONDARY_KEY');
     
-    if (!mapboxToken) {
-      console.error('MAPBOX_PUBLIC_TOKEN not configured');
+    if (!apiKey) {
+      console.error('Geoapify API key not configured');
       return new Response(
         JSON.stringify({ error: 'Geocoding service not configured' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -35,46 +35,20 @@ serve(async (req) => {
     let longitude = null;
     let foundLocation = false;
 
-    // Try multiple strategies for better Indian location coverage
-    const searchStrategies = [];
+    // Use Geoapify Geocoding API with bias towards India
+    const geocodeUrl = `https://api.geoapify.com/v1/geocode/search?text=${encodeURIComponent(location)}&apiKey=${apiKey}&filter=countrycode:in&limit=1`;
     
-    if (usePincode) {
-      // For pincodes, try multiple formats
-      const pincode = location.replace(', India', '').trim();
-      searchStrategies.push(
-        { query: `Patna ${pincode}`, types: 'place,postcode' },
-        { query: `Bihar ${pincode}`, types: 'region,postcode' },
-        { query: `${pincode}`, types: 'postcode' },
-        { query: location, types: '' }
-      );
-    } else {
-      // For general locations, try city-level if exact address fails
-      searchStrategies.push(
-        { query: location, types: '' },
-        { query: 'Patna, Bihar, India', types: 'place' }
-      );
-    }
-
-    for (const strategy of searchStrategies) {
-      if (foundLocation) break;
-      
-      const typesParam = strategy.types ? `&types=${strategy.types}` : '';
-      const geocodeUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(strategy.query)}.json?access_token=${mapboxToken}&country=IN${typesParam}&limit=1`;
-      
-      console.log(`Trying geocoding strategy: ${strategy.query}`);
-      
-      const response = await fetch(geocodeUrl);
-      const data = await response.json();
-      
-      if (data.features && data.features.length > 0) {
-        [longitude, latitude] = data.features[0].center;
-        foundLocation = true;
-        console.log(`Geocoded successfully using "${strategy.query}": ${latitude}, ${longitude}`);
-        break;
-      }
-
-      // Small delay between retries
-      await new Promise(resolve => setTimeout(resolve, 100));
+    console.log('Geocoding location with Geoapify:', location);
+    
+    const response = await fetch(geocodeUrl);
+    const data = await response.json();
+    
+    if (data.features && data.features.length > 0) {
+      const coords = data.features[0].geometry.coordinates;
+      longitude = coords[0];
+      latitude = coords[1];
+      foundLocation = true;
+      console.log(`Geocoded successfully: ${latitude}, ${longitude}`);
     }
 
     if (!foundLocation) {

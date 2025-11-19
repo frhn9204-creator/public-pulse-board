@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import mapboxgl from 'mapbox-gl';
-import 'mapbox-gl/dist/mapbox-gl.css';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import { Issue } from '@/hooks/useIssues';
 import { Card } from './ui/card';
 import { Badge } from './ui/badge';
@@ -14,24 +14,26 @@ interface MapProps {
 
 const Map: React.FC<MapProps> = ({ issues }) => {
   const mapContainer = useRef<HTMLDivElement>(null);
-  const map = useRef<mapboxgl.Map | null>(null);
-  const markersRef = useRef<mapboxgl.Marker[]>([]);
+  const map = useRef<L.Map | null>(null);
+  const markersRef = useRef<L.Marker[]>([]);
   const [selectedIssue, setSelectedIssue] = useState<Issue | null>(null);
-  const [mapboxToken, setMapboxToken] = useState<string>('');
+  const [apiKey, setApiKey] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  // Fetch Mapbox token
+  // Fetch Geoapify token
   useEffect(() => {
     const fetchToken = async () => {
       try {
         const { data, error } = await supabase.functions.invoke('get-mapbox-token');
         if (error) throw error;
-        if (data?.token) {
-          setMapboxToken(data.token);
+        if (data?.primaryKey) {
+          setApiKey(data.primaryKey);
+        } else if (data?.secondaryKey) {
+          setApiKey(data.secondaryKey);
         }
       } catch (error) {
-        console.error('Failed to fetch Mapbox token:', error);
+        console.error('Failed to fetch Geoapify API key:', error);
       } finally {
         setLoading(false);
       }
@@ -40,33 +42,25 @@ const Map: React.FC<MapProps> = ({ issues }) => {
   }, []);
 
   useEffect(() => {
-    if (!mapContainer.current || map.current || !mapboxToken) return;
+    if (!mapContainer.current || map.current || !apiKey) return;
 
-    // Initialize map
-    mapboxgl.accessToken = mapboxToken;
-    
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/streets-v12',
-      center: [78.9629, 20.5937], // Center of India
-      zoom: 4,
-    });
+    // Initialize map with Leaflet and Geoapify tiles
+    map.current = L.map(mapContainer.current).setView([20.5937, 78.9629], 5);
 
-    // Add navigation controls
-    map.current.addControl(
-      new mapboxgl.NavigationControl({
-        visualizePitch: true,
-      }),
-      'top-right'
-    );
-
-    // Add fullscreen control
-    map.current.addControl(new mapboxgl.FullscreenControl(), 'top-right');
+    // Add Geoapify tiles
+    L.tileLayer(
+      `https://maps.geoapify.com/v1/tile/osm-bright/{z}/{x}/{y}.png?apiKey=${apiKey}`,
+      {
+        attribution: '© OpenStreetMap contributors | © Geoapify',
+        maxZoom: 20,
+      }
+    ).addTo(map.current);
 
     return () => {
       map.current?.remove();
+      map.current = null;
     };
-  }, [mapboxToken]);
+  }, [apiKey]);
 
   useEffect(() => {
     if (!map.current) return;
@@ -91,29 +85,30 @@ const Map: React.FC<MapProps> = ({ issues }) => {
 
       const color = urgencyColors[issue.urgency || 'medium'];
 
-      // Create marker element
-      const el = document.createElement('div');
-      el.className = 'custom-marker';
-      el.style.backgroundColor = color;
-      el.style.width = '24px';
-      el.style.height = '24px';
-      el.style.borderRadius = '50%';
-      el.style.cursor = 'pointer';
-      el.style.border = '2px solid white';
-      el.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+      // Create custom icon
+      const icon = L.divIcon({
+        className: 'custom-marker',
+        html: `<div style="
+          background-color: ${color};
+          width: 24px;
+          height: 24px;
+          border-radius: 50%;
+          border: 2px solid white;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        "></div>`,
+        iconSize: [24, 24],
+        iconAnchor: [12, 12],
+      });
 
       // Create marker
-      const marker = new mapboxgl.Marker(el)
-        .setLngLat([issue.longitude!, issue.latitude!])
+      const marker = L.marker([issue.latitude!, issue.longitude!], { icon })
         .addTo(map.current!);
 
       // Add click handler
-      el.addEventListener('click', () => {
+      marker.on('click', () => {
         setSelectedIssue(issue);
-        map.current?.flyTo({
-          center: [issue.longitude!, issue.latitude!],
-          zoom: 12,
-          duration: 1000,
+        map.current?.flyTo([issue.latitude!, issue.longitude!], 12, {
+          duration: 1,
         });
       });
 
@@ -122,13 +117,12 @@ const Map: React.FC<MapProps> = ({ issues }) => {
 
     // Fit map to show all markers if there are any
     if (issuesWithCoordinates.length > 0) {
-      const bounds = new mapboxgl.LngLatBounds();
-      issuesWithCoordinates.forEach(issue => {
-        bounds.extend([issue.longitude!, issue.latitude!]);
-      });
-      map.current.fitBounds(bounds, { padding: 50, maxZoom: 10 });
+      const bounds = L.latLngBounds(
+        issuesWithCoordinates.map(issue => [issue.latitude!, issue.longitude!])
+      );
+      map.current.fitBounds(bounds, { padding: [50, 50], maxZoom: 10 });
     }
-  }, [issues]);
+  }, [issues, apiKey]);
 
   const getUrgencyColor = (urgency: string) => {
     const colors = {
@@ -148,7 +142,7 @@ const Map: React.FC<MapProps> = ({ issues }) => {
     );
   }
 
-  if (!mapboxToken) {
+  if (!apiKey) {
     return (
       <div className="relative w-full h-[600px] rounded-lg overflow-hidden flex items-center justify-center bg-muted">
         <p className="text-muted-foreground">Failed to load map. Please try again later.</p>
@@ -161,7 +155,7 @@ const Map: React.FC<MapProps> = ({ issues }) => {
       <div ref={mapContainer} className="absolute inset-0" />
       
       {selectedIssue && (
-        <Card className="absolute top-4 left-4 z-10 w-80 p-4 shadow-lg">
+        <Card className="absolute top-4 left-4 z-[1000] w-80 p-4 shadow-lg">
           <div className="space-y-3">
             <div className="flex items-start justify-between gap-2">
               <h3 className="font-semibold text-lg line-clamp-2">{selectedIssue.title}</h3>
@@ -199,7 +193,7 @@ const Map: React.FC<MapProps> = ({ issues }) => {
       )}
 
       {/* Legend */}
-      <Card className="absolute bottom-4 right-4 z-10 p-3 shadow-lg">
+      <Card className="absolute bottom-4 right-4 z-[1000] p-3 shadow-lg">
         <h4 className="font-semibold text-sm mb-2">Urgency Levels</h4>
         <div className="space-y-1 text-xs">
           <div className="flex items-center gap-2">

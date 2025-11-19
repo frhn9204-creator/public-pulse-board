@@ -17,10 +17,10 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const mapboxToken = Deno.env.get('MAPBOX_PUBLIC_TOKEN');
+    const apiKey = Deno.env.get('GEOAPIFY_PRIMARY_KEY') || Deno.env.get('GEOAPIFY_SECONDARY_KEY');
     
-    if (!mapboxToken) {
-      console.error('MAPBOX_PUBLIC_TOKEN not configured');
+    if (!apiKey) {
+      console.error('Geoapify API key not configured');
       return new Response(
         JSON.stringify({ error: 'Geocoding service not configured' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -84,16 +84,17 @@ serve(async (req) => {
         for (const searchStrategy of validSearchStrategies) {
           if (foundLocation) break;
           
-          const typesParam = searchStrategy.types ? `&types=${searchStrategy.types}` : '';
-          const geocodeUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(searchStrategy.query)}.json?access_token=${mapboxToken}&country=IN${typesParam}&limit=1`;
+          const geocodeUrl = `https://api.geoapify.com/v1/geocode/search?text=${encodeURIComponent(searchStrategy.query)}&apiKey=${apiKey}&filter=countrycode:in&limit=1`;
           
-          console.log(`Trying: ${searchStrategy.query} with types: ${searchStrategy.types || 'none'}`);
+          console.log(`Trying: ${searchStrategy.query}`);
           
           const response = await fetch(geocodeUrl);
           const data = await response.json();
           
           if (data.features && data.features.length > 0) {
-            [longitude, latitude] = data.features[0].center;
+            const coords = data.features[0].geometry.coordinates;
+            longitude = coords[0];
+            latitude = coords[1];
             foundLocation = true;
             console.log(`Found coordinates for issue ${issue.id} using "${searchStrategy.query}": ${latitude}, ${longitude}`);
           }
