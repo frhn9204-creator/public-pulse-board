@@ -47,9 +47,9 @@ const Map: React.FC<MapProps> = ({ issues }) => {
     // Initialize map with Leaflet and Geoapify tiles
     map.current = L.map(mapContainer.current).setView([20.5937, 78.9629], 5);
 
-    // Add Geoapify tiles
+    // Add Geoapify tiles with carto style
     L.tileLayer(
-      `https://maps.geoapify.com/v1/tile/osm-bright/{z}/{x}/{y}.png?apiKey=${apiKey}`,
+      `https://maps.geoapify.com/v1/tile/carto/{z}/{x}/{y}.png?apiKey=${apiKey}`,
       {
         attribution: '© OpenStreetMap contributors | © Geoapify',
         maxZoom: 20,
