@@ -51,7 +51,7 @@ export const LocationPicker = ({
           }
         );
         const data = await response.json();
-        setApiKey(data.primaryKey);
+        setApiKey(data.token);
       } catch (error) {
         console.error("Error fetching API key:", error);
       }
