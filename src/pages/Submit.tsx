@@ -15,10 +15,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Upload, Loader2, ExternalLink } from "lucide-react";
+import { Upload, Loader2, ExternalLink, MapPin } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { LocationPicker } from "@/components/LocationPicker";
 
 const issueSchema = z.object({
   title: z.string().trim().min(3, "Title must be at least 3 characters").max(200, "Title must be less than 200 characters"),
@@ -135,6 +136,7 @@ const Submit = () => {
   const { user, loading } = useAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [locationPickerOpen, setLocationPickerOpen] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
     state: "",
@@ -145,7 +147,9 @@ const Submit = () => {
     subLocation: "",
     pincode: "",
     description: "",
-    imageUrl: ""
+    imageUrl: "",
+    latitude: "",
+    longitude: ""
   });
 
   useEffect(() => {
@@ -187,30 +191,33 @@ const Submit = () => {
         "India"
       ].filter(Boolean).join(", ");
 
-      // Geocode the location - prioritize pincode if available
-      let latitude = null;
-      let longitude = null;
+      // Use manually selected coordinates if available, otherwise geocode
+      let latitude = formData.latitude ? parseFloat(formData.latitude) : null;
+      let longitude = formData.longitude ? parseFloat(formData.longitude) : null;
       
-      try {
-        // If pincode is provided, use it for more accurate geocoding
-        const geocodeLocation = validatedData.pincode 
-          ? `${validatedData.pincode}, India`
-          : fullLocation;
+      // Only geocode if coordinates weren't manually selected
+      if (!latitude || !longitude) {
+        try {
+          // If pincode is provided, use it for more accurate geocoding
+          const geocodeLocation = validatedData.pincode 
+            ? `${validatedData.pincode}, India`
+            : fullLocation;
+            
+          const geocodeResponse = await supabase.functions.invoke('geocode-location', {
+            body: { 
+              location: geocodeLocation,
+              usePincode: !!validatedData.pincode 
+            }
+          });
           
-        const geocodeResponse = await supabase.functions.invoke('geocode-location', {
-          body: { 
-            location: geocodeLocation,
-            usePincode: !!validatedData.pincode 
+          if (geocodeResponse.data && !geocodeResponse.error) {
+            latitude = geocodeResponse.data.latitude;
+            longitude = geocodeResponse.data.longitude;
           }
-        });
-        
-        if (geocodeResponse.data && !geocodeResponse.error) {
-          latitude = geocodeResponse.data.latitude;
-          longitude = geocodeResponse.data.longitude;
+        } catch (geocodeError) {
+          console.error('Geocoding failed:', geocodeError);
+          // Continue without coordinates if geocoding fails
         }
-      } catch (geocodeError) {
-        console.error('Geocoding failed:', geocodeError);
-        // Continue without coordinates if geocoding fails
       }
 
       const { error } = await supabase
@@ -447,6 +454,50 @@ const Submit = () => {
                   </p>
                 </div>
 
+                <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
+                  <div className="flex items-center justify-between">
+                    <Label>Coordinates (Optional)</Label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setLocationPickerOpen(true)}
+                    >
+                      <MapPin className="mr-2 h-4 w-4" />
+                      📍 Pick location on map
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="latitude">Latitude</Label>
+                      <Input
+                        id="latitude"
+                        type="number"
+                        step="any"
+                        placeholder="25.5977795"
+                        value={formData.latitude}
+                        onChange={(e) => setFormData({...formData, latitude: e.target.value})}
+                        readOnly
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="longitude">Longitude</Label>
+                      <Input
+                        id="longitude"
+                        type="number"
+                        step="any"
+                        placeholder="85.2093407"
+                        value={formData.longitude}
+                        onChange={(e) => setFormData({...formData, longitude: e.target.value})}
+                        readOnly
+                      />
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Click the button above to select precise coordinates on the map
+                  </p>
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="description">Detailed Description *</Label>
                   <Textarea
@@ -493,6 +544,18 @@ const Submit = () => {
         </div>
       </main>
       <Footer />
+      
+      <LocationPicker
+        open={locationPickerOpen}
+        onOpenChange={setLocationPickerOpen}
+        onLocationSelect={(lat, lng) => {
+          setFormData({
+            ...formData,
+            latitude: lat.toFixed(7),
+            longitude: lng.toFixed(7)
+          });
+        }}
+      />
     </div>
   );
 };
