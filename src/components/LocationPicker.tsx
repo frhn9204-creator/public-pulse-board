@@ -64,65 +64,63 @@ export const LocationPicker = ({
 
   // Initialize map when modal opens, cleanup when it closes
   useEffect(() => {
-    if (!open) {
-      // Modal is closed - cleanup existing map
-      if (map.current) {
-        map.current.remove();
-        map.current = null;
-        marker.current = null;
-      }
-      return;
-    }
+    if (open) {
+      // Modal is opening - wait for animation to complete, then initialize
+      const initTimer = setTimeout(() => {
+        if (!mapContainer.current || !apiKey || map.current) return;
 
-    // Modal is open - initialize map
-    if (!mapContainer.current || !apiKey) return;
+        map.current = L.map(mapContainer.current).setView([initialLat, initialLng], 5);
 
-    // Wait for dialog animation to complete before initializing map
-    const initTimer = setTimeout(() => {
-      if (!mapContainer.current || map.current) return;
-
-      map.current = L.map(mapContainer.current).setView([initialLat, initialLng], 5);
-
-      L.tileLayer(
-        `https://maps.geoapify.com/v1/tile/carto/{z}/{x}/{y}.png?apiKey=${apiKey}`,
-        {
-          attribution: '© OpenStreetMap contributors | © Geoapify',
-          maxZoom: 20,
-        }
-      ).addTo(map.current);
-
-      // Recalculate map size after tiles start loading
-      setTimeout(() => {
-        if (map.current) {
-          map.current.invalidateSize();
-        }
-      }, 100);
-
-      // Add click handler
-      if (map.current) {
-        map.current.on("click", (e: L.LeafletMouseEvent) => {
-          const { lat, lng } = e.latlng;
-
-          // Remove existing marker if any
-          if (marker.current) {
-            marker.current.remove();
+        L.tileLayer(
+          `https://maps.geoapify.com/v1/tile/carto/{z}/{x}/{y}.png?apiKey=${apiKey}`,
+          {
+            attribution: '© OpenStreetMap contributors | © Geoapify',
+            maxZoom: 20,
           }
+        ).addTo(map.current);
 
-          // Add new marker
-          marker.current = L.marker([lat, lng]).addTo(map.current!);
+        // Recalculate map size after tiles start loading
+        setTimeout(() => {
+          if (map.current) {
+            map.current.invalidateSize();
+          }
+        }, 100);
 
-          // Zoom to marker
-          map.current!.setView([lat, lng], 16);
+        // Add click handler
+        if (map.current) {
+          map.current.on("click", (e: L.LeafletMouseEvent) => {
+            const { lat, lng } = e.latlng;
 
-          // Update coordinates
-          onLocationSelect(lat, lng);
-        });
-      }
-    }, 400);
+            // Remove existing marker if any
+            if (marker.current) {
+              marker.current.remove();
+            }
 
-    return () => {
-      clearTimeout(initTimer);
-    };
+            // Add new marker
+            marker.current = L.marker([lat, lng]).addTo(map.current!);
+
+            // Zoom to marker
+            map.current!.setView([lat, lng], 16);
+
+            // Update coordinates
+            onLocationSelect(lat, lng);
+          });
+        }
+      }, 400);
+
+      return () => clearTimeout(initTimer);
+    } else {
+      // Modal is closing - wait for animation to complete, then cleanup
+      const cleanupTimer = setTimeout(() => {
+        if (map.current) {
+          map.current.remove();
+          map.current = null;
+          marker.current = null;
+        }
+      }, 400); // Match the dialog animation duration
+
+      return () => clearTimeout(cleanupTimer);
+    }
   }, [open, apiKey, initialLat, initialLng, onLocationSelect]);
 
   return (
