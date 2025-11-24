@@ -51,7 +51,7 @@ export const LocationPicker = ({
           }
         );
         const data = await response.json();
-        setApiKey(data.token);
+        setApiKey(data.primaryKey);
       } catch (error) {
         console.error("Error fetching API key:", error);
       }
@@ -81,7 +81,7 @@ export const LocationPicker = ({
       if (map.current) {
         map.current.invalidateSize();
       }
-    }, 100);
+    }, 300);
 
     // Add click handler
     map.current.on("click", (e: L.LeafletMouseEvent) => {
