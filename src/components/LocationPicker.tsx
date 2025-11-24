@@ -62,18 +62,20 @@ export const LocationPicker = ({
     }
   }, [open]);
 
-  // Initialize map only once when modal opens
+  // Initialize map when modal opens, cleanup when it closes
   useEffect(() => {
-    if (!open || !mapContainer.current || !apiKey) return;
-    if (map.current) {
-      // Map already exists, just recalculate size
-      setTimeout(() => {
-        if (map.current) {
-          map.current.invalidateSize();
-        }
-      }, 100);
+    if (!open) {
+      // Modal is closed - cleanup existing map
+      if (map.current) {
+        map.current.remove();
+        map.current = null;
+        marker.current = null;
+      }
       return;
     }
+
+    // Modal is open - initialize map
+    if (!mapContainer.current || !apiKey) return;
 
     // Wait for dialog animation to complete before initializing map
     const initTimer = setTimeout(() => {
@@ -122,17 +124,6 @@ export const LocationPicker = ({
       clearTimeout(initTimer);
     };
   }, [open, apiKey, initialLat, initialLng, onLocationSelect]);
-
-  // Cleanup map only when component unmounts
-  useEffect(() => {
-    return () => {
-      if (map.current) {
-        map.current.remove();
-        map.current = null;
-        marker.current = null;
-      }
-    };
-  }, []);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
