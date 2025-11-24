@@ -76,6 +76,13 @@ export const LocationPicker = ({
       }
     ).addTo(map.current);
 
+    // Fix: Recalculate map size after modal is fully rendered
+    setTimeout(() => {
+      if (map.current) {
+        map.current.invalidateSize();
+      }
+    }, 100);
+
     // Add click handler
     map.current.on("click", (e: L.LeafletMouseEvent) => {
       const { lat, lng } = e.latlng;
