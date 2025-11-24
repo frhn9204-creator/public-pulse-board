@@ -66,43 +66,51 @@ export const LocationPicker = ({
   useEffect(() => {
     if (!open || !mapContainer.current || !apiKey || map.current) return;
 
-    map.current = L.map(mapContainer.current).setView([initialLat, initialLng], 5);
+    // Wait for dialog animation to complete before initializing map
+    const initTimer = setTimeout(() => {
+      if (!mapContainer.current) return;
 
-    L.tileLayer(
-      `https://maps.geoapify.com/v1/tile/carto/{z}/{x}/{y}.png?apiKey=${apiKey}`,
-      {
-        attribution: '© OpenStreetMap contributors | © Geoapify',
-        maxZoom: 20,
-      }
-    ).addTo(map.current);
+      map.current = L.map(mapContainer.current).setView([initialLat, initialLng], 5);
 
-    // Fix: Recalculate map size after modal is fully rendered
-    setTimeout(() => {
+      L.tileLayer(
+        `https://maps.geoapify.com/v1/tile/carto/{z}/{x}/{y}.png?apiKey=${apiKey}`,
+        {
+          attribution: '© OpenStreetMap contributors | © Geoapify',
+          maxZoom: 20,
+        }
+      ).addTo(map.current);
+
+      // Recalculate map size after tiles start loading
+      setTimeout(() => {
+        if (map.current) {
+          map.current.invalidateSize();
+        }
+      }, 100);
+
+      // Add click handler
       if (map.current) {
-        map.current.invalidateSize();
+        map.current.on("click", (e: L.LeafletMouseEvent) => {
+          const { lat, lng } = e.latlng;
+
+          // Remove existing marker if any
+          if (marker.current) {
+            marker.current.remove();
+          }
+
+          // Add new marker
+          marker.current = L.marker([lat, lng]).addTo(map.current!);
+
+          // Zoom to marker
+          map.current!.setView([lat, lng], 16);
+
+          // Update coordinates
+          onLocationSelect(lat, lng);
+        });
       }
-    }, 300);
-
-    // Add click handler
-    map.current.on("click", (e: L.LeafletMouseEvent) => {
-      const { lat, lng } = e.latlng;
-
-      // Remove existing marker if any
-      if (marker.current) {
-        marker.current.remove();
-      }
-
-      // Add new marker
-      marker.current = L.marker([lat, lng]).addTo(map.current!);
-
-      // Zoom to marker
-      map.current!.setView([lat, lng], 16);
-
-      // Update coordinates
-      onLocationSelect(lat, lng);
-    });
+    }, 400);
 
     return () => {
+      clearTimeout(initTimer);
       if (map.current) {
         map.current.remove();
         map.current = null;
