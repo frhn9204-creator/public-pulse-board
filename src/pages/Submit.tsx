@@ -153,6 +153,28 @@ const Submit = () => {
     longitude: ""
   });
 
+  // Voice agent handoff: if the voice assistant collected a report, prefill the form with it.
+  useEffect(() => {
+    const raw = sessionStorage.getItem("voiceup_prefill");
+    if (!raw) return;
+    sessionStorage.removeItem("voiceup_prefill");
+    try {
+      const p = JSON.parse(raw);
+      setFormData((f) => ({
+        ...f,
+        title: p.title || f.title,
+        description: p.description || f.description,
+        category: p.category || f.category,
+        urgency: p.urgency || f.urgency,
+        organization: p.organization || f.organization,
+        location: (p.location || "").replace(", Bihar, India", "") || f.location,
+        pincode: p.pincode || f.pincode,
+        state: "Bihar",
+      }));
+      toast({ title: "Voice report loaded", description: "Check the details and press Submit." });
+    } catch { /* ignore malformed handoff */ }
+  }, []);
+
   useEffect(() => {
     if (!loading && !user) {
       toast({

@@ -13,6 +13,7 @@ import Submit from "./pages/Submit";
 import Auth from "./pages/Auth";
 import MapView from "./pages/MapView";
 import AdminGeocoding from "./pages/AdminGeocoding";
+import { VoiceAgent } from "./components/VoiceAgent";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +35,7 @@ const App = () => (
           <Route path="/admin/geocoding" element={<AdminGeocoding />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
+        <VoiceAgent />
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
