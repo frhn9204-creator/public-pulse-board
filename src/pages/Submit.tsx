@@ -154,7 +154,10 @@ const Submit = () => {
   });
 
   // Voice agent handoff: if the voice assistant collected a report, prefill the form with it.
+  // Wait until auth is resolved AND the user is signed in — this page redirects
+  // anonymous visitors to /auth, and the handoff must survive that round-trip.
   useEffect(() => {
+    if (loading || !user) return;
     const raw = sessionStorage.getItem("voiceup_prefill");
     if (!raw) return;
     sessionStorage.removeItem("voiceup_prefill");
