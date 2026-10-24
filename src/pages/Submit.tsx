@@ -20,6 +20,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { LocationPicker } from "@/components/LocationPicker";
+import { VoiceDictation } from "@/components/VoiceDictation";
 
 const issueSchema = z.object({
   title: z.string().trim().min(3, "Title must be at least 3 characters").max(200, "Title must be less than 200 characters"),
@@ -499,10 +500,21 @@ const Submit = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="description">Detailed Description *</Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="description">Detailed Description *</Label>
+                    <span className="text-xs font-medium text-orange-600">Voice available</span>
+                  </div>
+                  <VoiceDictation
+                    onAppend={(t) =>
+                      setFormData((f) => ({
+                        ...f,
+                        description: (f.description ? f.description + " " : "") + t,
+                      }))
+                    }
+                  />
                   <Textarea
                     id="description"
-                    placeholder="Provide details about the issue, when it started, and its impact..."
+                    placeholder="Provide details about the issue, when it started, and its impact... (or tap Speak and say it)"
                     className="min-h-[150px]"
                     value={formData.description}
                     onChange={(e) => setFormData({...formData, description: e.target.value})}
