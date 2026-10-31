@@ -1,73 +1,45 @@
-# Welcome to your Lovable project
+# VoiceUp 🗣️
 
-## Project info
+**Empowering Citizens Through Transparent Reporting.**
 
-**URL**: https://lovable.dev/projects/4bc5fb91-1b07-4b92-a2ad-40b82f4847db
+VoiceUp is a public civic-issue reporting platform: anyone can report a local problem — a pothole, a broken streetlight, an open drain, uncollected garbage — with the exact location, and everyone can see it, track its status, and push it up the public agenda.
 
-## How can I edit this code?
+**Live app:** https://voice-up.netlify.app
 
-There are several ways of editing your application.
+## Voice reporting
 
-**Use Lovable**
+VoiceUp includes a built-in voice assistant for citizens who cannot read or write: a floating mic button on every page opens a talking agent that asks each report question out loud, listens to the spoken answers (Hindi, Bhojpuri through the Hindi model, or English), confirms the important details, and files the report automatically. It runs entirely in the browser on the Web Speech API and speech synthesis — no servers, no API keys, no cost.
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/4bc5fb91-1b07-4b92-a2ad-40b82f4847db) and start prompting.
+## Features
 
-Changes made via Lovable will be committed automatically to this repo.
+- **Report an issue** — title, description, category, urgency, the responsible organization, and location (place name, pincode, GPS coordinates), plus an optional photo link
+- **Voice agent** — press-to-talk interviewer that fills the whole report by conversation
+- **Public status tracking** — every issue moves through `open → in progress → resolved`, visible to everyone
+- **Community signal** — upvotes, comments and view counts; the **Trending** page surfaces what the neighborhood cares about most
+- **Map view** — every issue pinned by GPS coordinates
+- **Organizations** — issues are tagged to the body responsible (municipal ward, electricity board, etc.)
+- **Accounts** — sign in to report, vote and comment
 
-**Use your preferred IDE**
+## Tech stack
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+React 18 · TypeScript · Vite · Tailwind CSS · shadcn/ui · Supabase (Postgres + Auth) · TanStack Query · Web Speech API
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+## Local development
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
+git clone https://github.com/frhn9204-creator/public-pulse-board.git
+cd public-pulse-board
 npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+## Roadmap
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+- 📷 Direct camera photo upload
+- 🏛️ Official response timeline per issue
+- 📊 Ward-level public dashboards
+- 💬 Report via WhatsApp
 
-**Use GitHub Codespaces**
+---
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/4bc5fb91-1b07-4b92-a2ad-40b82f4847db) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+Built by [frhn9204-creator](https://github.com/frhn9204-creator), a Class 11 student from Patna, India.
